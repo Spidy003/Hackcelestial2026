@@ -1701,8 +1701,8 @@ export default function GuestsExperiencePage() {
 
         return (
           <div className="space-y-4">
-            {/* Header with Stats */}
-            <div className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Header with Stats & Batch Actions */}
+            <div className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div>
                 <h3 className="font-black text-sm text-slate-900">
                   In-House Guest Roster & Lifetime Value (LTV)
@@ -1712,13 +1712,44 @@ export default function GuestsExperiencePage() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
                   {activeInHouse.length} Active In-House
                 </span>
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {checkedOutList.length} Checked Out
                 </span>
+
+                {activeInHouse.length > 0 && (
+                  <button
+                    onClick={() => {
+                      const allIds = fullRoster.map(g => String(g.id))
+                      localStorage.setItem('resort_checked_out_guests', JSON.stringify(allIds))
+                      setCheckedOutIds(new Set(allIds))
+                      window.dispatchEvent(new Event('resort-guest-checkout'))
+                      window.dispatchEvent(new Event('storage'))
+                      setCheckoutMsg(`✓ All ${fullRoster.length} guests checked out! All rooms marked Vacant Dirty • Housekeeping turnaround dispatched.`)
+                    }}
+                    className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-all cursor-pointer"
+                  >
+                    Check Out All Guests
+                  </button>
+                )}
+
+                {checkedOutList.length > 0 && (
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('resort_checked_out_guests')
+                      setCheckedOutIds(new Set())
+                      window.dispatchEvent(new Event('resort-guest-checkout'))
+                      window.dispatchEvent(new Event('storage'))
+                      setCheckoutMsg(`✓ All guests re-admitted to active in-house roster!`)
+                    }}
+                    className="px-3 py-1 rounded-full text-xs font-bold bg-slate-900 hover:bg-black text-white transition-all cursor-pointer"
+                  >
+                    Check In All / Reset Roster
+                  </button>
+                )}
               </div>
             </div>
 

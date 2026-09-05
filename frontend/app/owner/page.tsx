@@ -281,42 +281,58 @@ export default function OwnerDashboardPage() {
   const isVip = activeChaos?.scenarioId === 'vip_critical'
 
   // Occupied rooms & occupancy pct:
-  // Base from backend (or fallback to healthy 76 rooms) - minus real-time checkouts
+  // Dynamically linked to In-House Guest Roster & active checkouts
+  const totalRosterCount = 5 + activeBookings.length
+  const activeInHouseCount = Math.max(0, totalRosterCount - checkedOutCount)
+  const activeRatio = totalRosterCount > 0 ? (activeInHouseCount / totalRosterCount) : 0
+
   const baseOccupied = (kpis?.occupied_rooms && kpis.occupied_rooms > 40) ? kpis.occupied_rooms : 76
-  const chaosRoomBoost = isWeddingRush ? 6 : 0
-  const occupiedRooms = Math.min(84, Math.max(0, baseOccupied + addedRoomsFromUser + chaosRoomBoost - checkedOutCount))
-  const occPct = isWeddingRush ? 98 : Math.min(99, Math.round((occupiedRooms / 84) * 100))
+
+  // If wedding rush chaos is injected, 96% of rooms are occupied
+  // If activeInHouseCount is 0 (all guests checked out / logged out), occupied rooms drops to 0!
+  // Otherwise, scale proportionally with active in-house ratio:
+  const occupiedRooms = isWeddingRush
+    ? 80
+    : (activeInHouseCount === 0 ? 0 : Math.min(84, Math.max(1, Math.round(baseOccupied * activeRatio) + addedRoomsFromUser)))
+
+  const occPct = isWeddingRush
+    ? 96
+    : (activeInHouseCount === 0 ? 0 : Math.min(99, Math.round((occupiedRooms / 84) * 100)))
 
   const staffList = Object.values(staff || {})
   const staffLoad = useMemo(() => {
     if (isStaffShortage) return 92
     if (isWeddingRush) return 88
+    if (activeInHouseCount === 0) return 34 // Minimal staff load when no active guests
     if (staffList.length === 0) return 74
     const total = staffList.reduce((acc, s) => acc + (s.utilisation_pct || 72), 0)
-    return Math.min(96, Math.max(72, Math.round(total / staffList.length)))
-  }, [staffList, isStaffShortage, isWeddingRush])
+    return Math.min(96, Math.max(38, Math.round((total / staffList.length) * (0.35 + 0.65 * activeRatio))))
+  }, [staffList, isStaffShortage, isWeddingRush, activeInHouseCount, activeRatio])
 
   const staffAvailable = useMemo(() => {
     if (isStaffShortage) return 4
     if (isWeddingRush) return 8
+    if (activeInHouseCount === 0) return 30 // All staff on standby
     const count = staffList.filter(s => s.status === 'idle').length
-    return count > 0 ? Math.min(18, count) : 12
-  }, [staffList, isStaffShortage, isWeddingRush])
+    return count > 0 ? Math.min(22, count) : 12
+  }, [staffList, isStaffShortage, isWeddingRush, activeInHouseCount])
 
   const taskList = Object.values(tasks || {})
   const avgWaitMin = useMemo(() => {
+    if (activeInHouseCount === 0 && !isStaffShortage) return 0 // No guest wait when 0 active guests
     if (isStaffShortage) return 22
     if (isWeddingRush) return 15
     if (taskList.length === 0) return 10
     const totalMin = taskList.reduce((acc, t) => acc + (t.sla_minutes ? Math.round(t.sla_minutes / 2.5) : 10), 0)
-    return Math.max(8, Math.round(totalMin / taskList.length))
-  }, [taskList, isStaffShortage, isWeddingRush])
+    return Math.max(4, Math.round(totalMin / taskList.length))
+  }, [taskList, isStaffShortage, isWeddingRush, activeInHouseCount])
 
   const revenueToday = useMemo(() => {
-    const baseRev = (occupiedRooms * 8500) + 194000
+    if (activeInHouseCount === 0 && !isWeddingRush) return 0
+    const baseRev = (occupiedRooms * 8500) + (occupiedRooms > 0 ? 194000 : 0)
     const chaosRev = isWeddingRush ? 385000 : 0
     return baseRev + addedRevFromUser + chaosRev
-  }, [occupiedRooms, addedRevFromUser, isWeddingRush])
+  }, [occupiedRooms, addedRevFromUser, isWeddingRush, activeInHouseCount])
 
   // ── 3. Exact Alerts Specified by User + Live Guest Escalations ──
   const rawAlerts: AlertItem[] = [
@@ -482,13 +498,14 @@ export default function OwnerDashboardPage() {
 
   // ── 6. Seven-Day Stress Trend & Index ──
   const currentStress = useMemo(() => {
+    if (activeInHouseCount === 0 && !isWeddingRush && !isChiller) return 12
     if (isChiller) return 85
     if (isWeddingRush) return 86
     if (isStaffShortage) return 82
     if (isMonsoon) return 78
     if (isVip) return 76
-    return Math.max(58, stress_index || 68)
-  }, [isChiller, isWeddingRush, isStaffShortage, isMonsoon, isVip, stress_index])
+    return Math.round(18 + (occPct * 0.55))
+  }, [isChiller, isWeddingRush, isStaffShortage, isMonsoon, isVip, activeInHouseCount, occPct])
 
   const trendPoints = useMemo(() => {
     const base = stress_trend && stress_trend.length >= 6 ? [...stress_trend] : [58, 62, 54, 68, 60, 64]

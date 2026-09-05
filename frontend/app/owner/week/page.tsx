@@ -185,9 +185,12 @@ export default function OwnerWeeklySummaryPage() {
     return 0
   }, [])
 
-  const occupiedRooms = Math.min(84, Math.max(0, (kpis?.occupied_rooms && kpis.occupied_rooms > 40 ? kpis.occupied_rooms : 76) + addedRooms - checkedOutCount))
-  const occPct = Math.min(99, Math.round((occupiedRooms / 84) * 100))
-  const thisWeekRevenue = (occupiedRooms * 8500 * 7) + 1358000 // ~₹5.88M
+  const totalRoster = 5 + localActiveBookings.length
+  const activeCount = Math.max(0, totalRoster - checkedOutCount)
+  const activeRatio = totalRoster > 0 ? (activeCount / totalRoster) : 0
+  const occupiedRooms = activeCount === 0 ? 0 : Math.min(84, Math.round(76 * activeRatio) + addedRooms)
+  const occPct = activeCount === 0 ? 0 : Math.min(99, Math.round((occupiedRooms / 84) * 100))
+  const thisWeekRevenue = activeCount === 0 ? 0 : (occupiedRooms * 8500 * 7) + 1358000 // ~₹5.88M
   const prevWeekRevenue = 5240000
   const netGain = thisWeekRevenue - prevWeekRevenue
 
