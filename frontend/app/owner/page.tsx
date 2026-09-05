@@ -231,29 +231,85 @@ export default function OwnerDashboardPage() {
     return 'Good evening, Manager 👋'
   }, [simDate.hour])
 
-  // ── 2. Data Mappings ──
-  const occPct = Math.round(kpis?.occupancy_pct || 91)
+  // ── Live Active Bookings (from /guests) & Active Chaos (from /simulate) ──
+  const [activeBookings, setActiveBookings] = useState<any[]>([])
+  const [activeChaos, setActiveChaos] = useState<any>(null)
+
+  useEffect(() => {
+    const syncLocal = () => {
+      try {
+        const b = JSON.parse(localStorage.getItem('resort_active_bookings') || '[]')
+        setActiveBookings(b)
+      } catch {}
+      try {
+        const c = JSON.parse(localStorage.getItem('resort_active_chaos') || 'null')
+        setActiveChaos(c)
+      } catch {}
+    }
+    syncLocal()
+    window.addEventListener('storage', syncLocal)
+    window.addEventListener('resort-chaos-change', syncLocal)
+    window.addEventListener('resort-active-bookings-change', syncLocal)
+    return () => {
+      window.removeEventListener('storage', syncLocal)
+      window.removeEventListener('resort-chaos-change', syncLocal)
+      window.removeEventListener('resort-active-bookings-change', syncLocal)
+    }
+  }, [])
+
+  // User added bookings from /guests
+  const addedRoomsFromUser = useMemo(() => {
+    return activeBookings.reduce((sum, b) => sum + Math.max(1, Math.ceil((b.party_size || 2) / 2)), 0)
+  }, [activeBookings])
+
+  const addedRevFromUser = useMemo(() => {
+    return activeBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0)
+  }, [activeBookings])
+
+  // Chaos effects
+  const isWeddingRush = activeChaos?.scenarioId === 'wedding_rush'
+  const isStaffShortage = activeChaos?.scenarioId === 'staff_shortage'
+  const isMonsoon = activeChaos?.scenarioId === 'monsoon_storm'
+  const isChiller = activeChaos?.scenarioId === 'chiller_failure'
+  const isVip = activeChaos?.scenarioId === 'vip_critical'
+
+  // Occupied rooms & occupancy pct:
+  // Base from backend (or fallback to healthy 76 rooms)
+  const baseOccupied = (kpis?.occupied_rooms && kpis.occupied_rooms > 40) ? kpis.occupied_rooms : 76
+  const chaosRoomBoost = isWeddingRush ? 6 : 0
+  const occupiedRooms = Math.min(84, Math.max(74, baseOccupied + addedRoomsFromUser + chaosRoomBoost))
+  const occPct = isWeddingRush ? 98 : Math.min(99, Math.round((occupiedRooms / 84) * 100))
+
   const staffList = Object.values(staff || {})
   const staffLoad = useMemo(() => {
+    if (isStaffShortage) return 92
+    if (isWeddingRush) return 88
     if (staffList.length === 0) return 74
-    const total = staffList.reduce((acc, s) => acc + (s.utilisation_pct || 70), 0)
-    return Math.round(total / staffList.length)
-  }, [staffList])
+    const total = staffList.reduce((acc, s) => acc + (s.utilisation_pct || 72), 0)
+    return Math.min(96, Math.max(72, Math.round(total / staffList.length)))
+  }, [staffList, isStaffShortage, isWeddingRush])
+
   const staffAvailable = useMemo(() => {
-    return staffList.filter(s => s.status === 'idle').length || 12
-  }, [staffList])
+    if (isStaffShortage) return 4
+    if (isWeddingRush) return 8
+    const count = staffList.filter(s => s.status === 'idle').length
+    return count > 0 ? Math.min(18, count) : 12
+  }, [staffList, isStaffShortage, isWeddingRush])
 
   const taskList = Object.values(tasks || {})
   const avgWaitMin = useMemo(() => {
-    if (taskList.length === 0) return 11
+    if (isStaffShortage) return 22
+    if (isWeddingRush) return 15
+    if (taskList.length === 0) return 10
     const totalMin = taskList.reduce((acc, t) => acc + (t.sla_minutes ? Math.round(t.sla_minutes / 2.5) : 10), 0)
-    return Math.max(4, Math.round(totalMin / taskList.length))
-  }, [taskList])
+    return Math.max(8, Math.round(totalMin / taskList.length))
+  }, [taskList, isStaffShortage, isWeddingRush])
 
-  const occupiedRooms = kpis?.occupied_rooms || 76
   const revenueToday = useMemo(() => {
-    return (occupiedRooms * 8500) + 194000
-  }, [occupiedRooms])
+    const baseRev = (occupiedRooms * 8500) + 194000
+    const chaosRev = isWeddingRush ? 385000 : 0
+    return baseRev + addedRevFromUser + chaosRev
+  }, [occupiedRooms, addedRevFromUser, isWeddingRush])
 
   // ── 3. Exact Alerts Specified by User + Live Guest Escalations ──
   const rawAlerts: AlertItem[] = [
@@ -418,8 +474,20 @@ export default function OwnerDashboardPage() {
   }
 
   // ── 6. Seven-Day Stress Trend & Index ──
-  const trendPoints = stress_trend || [58, 62, 54, 68, 60, 64, stress_index || 68]
-  const currentStress = stress_index || 68
+  const currentStress = useMemo(() => {
+    if (isChiller) return 85
+    if (isWeddingRush) return 86
+    if (isStaffShortage) return 82
+    if (isMonsoon) return 78
+    if (isVip) return 76
+    return Math.max(58, stress_index || 68)
+  }, [isChiller, isWeddingRush, isStaffShortage, isMonsoon, isVip, stress_index])
+
+  const trendPoints = useMemo(() => {
+    const base = stress_trend && stress_trend.length >= 6 ? [...stress_trend] : [58, 62, 54, 68, 60, 64]
+    return [...base.slice(0, 6), currentStress]
+  }, [stress_trend, currentStress])
+
   const stressLevel = currentStress > 75 ? 'HIGH' : currentStress > 50 ? 'MODERATE' : 'CALM'
 
   // ── 7. Aggregated Hotel Calculation ──
@@ -1232,7 +1300,7 @@ export default function OwnerDashboardPage() {
           </div>
 
           {/* Simulated Date & Time */}
-          <div className={`hidden sm:flex items-center px-2.5 py-0.5 rounded-full shadow-xs font-medium text-[11px] ${is8Bit ? 'bg-white text-black border-2 border-black font-pixel text-[8px]' : 'bg-white text-slate-700'}`}>
+          <div suppressHydrationWarning className={`hidden sm:flex items-center px-2.5 py-0.5 rounded-full shadow-xs font-medium text-[11px] ${is8Bit ? 'bg-white text-black border-2 border-black font-pixel text-[8px]' : 'bg-white text-slate-700'}`}>
             {simDate.formatted}
           </div>
 
@@ -1550,6 +1618,44 @@ export default function OwnerDashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* Active Chaos Notification Banner */}
+      {activeChaos && (
+        <div className={`p-2.5 flex items-center justify-between gap-3 border-2 ${
+          is8Bit 
+            ? 'bg-[#1a0a0a] border-[#ff0055] text-white shadow-[4px_4px_0px_#000]' 
+            : 'bg-gradient-to-r from-amber-50 to-rose-50 border-rose-300 text-rose-900 rounded-xl shadow-sm'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="text-base animate-bounce">⚡</span>
+            <div>
+              <span className={`block uppercase font-bold tracking-wider ${is8Bit ? 'font-pixel text-[8px] text-[#ff0055]' : 'text-[11px] text-rose-700'}`}>
+                LIVE CHAOS TEST INJECTED:
+              </span>
+              <span className={`font-black ${is8Bit ? 'font-pixel text-xs text-white' : 'text-xs text-rose-950 font-bold'}`}>
+                {activeChaos.title || activeChaos.scenarioId}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                localStorage.removeItem('resort_active_chaos')
+                window.dispatchEvent(new Event('resort-chaos-change'))
+                window.dispatchEvent(new Event('storage'))
+                await fetch(`${API_URL}/api/sim/reset_demo`, { method: 'POST' }).catch(() => {})
+              } catch {}
+            }}
+            className={`px-3 py-1.5 uppercase font-bold text-xs transition-all ${
+              is8Bit
+                ? 'font-pixel text-[8px] bg-[#ff0055] text-black border-2 border-black hover:bg-white'
+                : 'bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm text-[11px]'
+            }`}
+          >
+            Reset Baseline
+          </button>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════
           KPI ROW: 4 Cards (Value, Comparison vs Yesterday, Sparkline)

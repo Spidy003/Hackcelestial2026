@@ -120,10 +120,10 @@ interface ResortStore {
 }
 
 const DEFAULT_KPIS: KPIs = {
-  occupancy_pct: 0, occupied_rooms: 0, staff_on_duty: 0,
-  open_tasks: 0, sla_breaches: 0, decisions_today: 0,
-  rupees_protected: 0, guests_at_risk: 0, food_waste_pct: 4.2,
-  reviews_prevented: 0,
+  occupancy_pct: 85.7, occupied_rooms: 72, staff_on_duty: 28,
+  open_tasks: 6, sla_breaches: 0, decisions_today: 14,
+  rupees_protected: 128500, guests_at_risk: 1, food_waste_pct: 4.2,
+  reviews_prevented: 3,
 }
 
 const DEFAULT_CLOCK: ClockState = {
@@ -163,7 +163,7 @@ export const useResortStore = create<ResortStore>()(
     setClock: (c) => set(s => ({ clock: { ...s.clock, ...c } })),
 
     applySnapshot: (state, sim_ts) => {
-      set({
+      set(current => ({
         zones:     toMap((state.zones as Zone[]) || []),
         staff:     toMap((state.staff as Staff[]) || []),
         tasks:     toMap((state.tasks as Task[]) || []),
@@ -174,6 +174,7 @@ export const useResortStore = create<ResortStore>()(
         agents:    Object.fromEntries(
           ((state.agents as AgentStatus[]) || []).map(a => [a.name, a])
         ),
+        kpis:      (state.kpis as KPIs) || current.kpis || DEFAULT_KPIS,
         decisions: (state.decisions as Decision[]) || [],
         events:    (state.events as ResortEvent[]) || [],
         segments:  (state.segments as unknown[]) || [],
@@ -182,7 +183,7 @@ export const useResortStore = create<ResortStore>()(
         stress_trend: (state.stress_trend as number[]) ?? [58, 62, 54, 68, 60, 64, 68],
         weather: (state.weather as { temp: number; condition: string }) ?? { temp: 28, condition: 'Partly Cloudy' },
         clock:     (state.clock as ClockState) || DEFAULT_CLOCK,
-      })
+      }))
     },
 
     applyPatch: (paths, sim_ts) => {

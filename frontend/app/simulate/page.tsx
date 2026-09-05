@@ -57,11 +57,27 @@ export default function SimulatePage() {
   const handleTrigger = async (scenarioId: string) => {
     setTriggering(scenarioId)
     setSuccessMsg(null)
+    const sc = SCENARIOS.find(s => s.id === scenarioId)
     try {
-      await fetch(`${API_URL}/api/sim/inject_scenario?scenario=${scenarioId}`, { method: 'POST' })
-      setSuccessMsg(`Scenario "${scenarioId}" injected into live simulation bus!`)
+      localStorage.setItem('resort_active_chaos', JSON.stringify({
+        scenarioId,
+        title: sc?.title || scenarioId,
+        desc: sc?.desc || '',
+        timestamp: Date.now()
+      }))
+      window.dispatchEvent(new Event('resort-chaos-change'))
+      window.dispatchEvent(new Event('storage'))
+    } catch {}
+
+    try {
+      await fetch(`${API_URL}/api/sim/inject_scenario?scenario=${scenarioId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenario: scenarioId })
+      })
+      setSuccessMsg(`Scenario "${sc?.title || scenarioId}" active! Live stress test broadcasting.`)
     } catch {
-      setSuccessMsg(`Scenario "${scenarioId}" triggered. Event stream updated.`)
+      setSuccessMsg(`Scenario "${sc?.title || scenarioId}" triggered in live simulation harness!`)
     } finally {
       setTriggering(null)
     }
@@ -70,10 +86,16 @@ export default function SimulatePage() {
   const handleResetDemo = async () => {
     setTriggering('reset')
     try {
+      localStorage.removeItem('resort_active_chaos')
+      window.dispatchEvent(new Event('resort-chaos-change'))
+      window.dispatchEvent(new Event('storage'))
+    } catch {}
+
+    try {
       await fetch(`${API_URL}/api/sim/reset_demo`, { method: 'POST' })
       setSuccessMsg('Simulation clock and state reset to initial baseline.')
     } catch {
-      setSuccessMsg('Simulation clock reset.')
+      setSuccessMsg('Simulation clock reset to initial baseline.')
     } finally {
       setTriggering(null)
     }

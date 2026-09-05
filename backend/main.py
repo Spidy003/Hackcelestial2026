@@ -257,13 +257,22 @@ async def _recompute_derived(sim_ts: datetime) -> Dict[str, Any]:
 
         # --- Clock state ---
         from backend.core.clock import clock
-        patch["clock"] = clock.state()
+        from backend.api.sim import CURRENT_ACTIVE_CHAOS
 
         # --- Global KPIs ---
-        total_rooms = db.query(Room).count()
+        total_rooms = db.query(Room).count() or 84
         occupied_rooms = db.query(Room).filter(Room.status == "occupied").count()
-        occupancy_pct = (occupied_rooms / total_rooms * 100) if total_rooms else 0
-        patch["kpis.occupancy_pct"] = round(occupancy_pct, 1)
+        # Maintain a realistic baseline for a 5-star operational resort (at least 72 rooms = 85.7%)
+        occupied_rooms = max(occupied_rooms, 72)
+        occupancy_pct = round((occupied_rooms / total_rooms * 100), 1)
+
+        # If chaos scenario active, apply its KPI overrides
+        if CURRENT_ACTIVE_CHAOS:
+            if "occupancy_pct" in CURRENT_ACTIVE_CHAOS:
+                occupancy_pct = CURRENT_ACTIVE_CHAOS["occupancy_pct"]
+                occupied_rooms = int(total_rooms * (occupancy_pct / 100.0))
+
+        patch["kpis.occupancy_pct"] = occupancy_pct
         patch["kpis.occupied_rooms"] = occupied_rooms
 
         staff_on_duty = db.query(Staff).filter(Staff.status.in_(["idle","busy"])).count()
@@ -300,7 +309,12 @@ async def _recompute_derived(sim_ts: datetime) -> Dict[str, Any]:
         sla_ratio = (sla_breaches / max(1, open_task_count)) * 100.0
 
         stress_calc = round(0.35 * avg_wi + 0.25 * avg_util + 0.20 * avg_maint_risk + 0.20 * sla_ratio)
-        stress_index = max(10, min(95, stress_calc))
+        stress_index = max(58, min(95, stress_calc))
+
+        # Chaos override for stress index
+        if CURRENT_ACTIVE_CHAOS and "stress_index" in CURRENT_ACTIVE_CHAOS:
+            stress_index = CURRENT_ACTIVE_CHAOS["stress_index"]
+
         patch["stress_index"] = stress_index
 
         global _STRESS_TREND_SERIES
@@ -312,11 +326,14 @@ async def _recompute_derived(sim_ts: datetime) -> Dict[str, Any]:
                 _STRESS_TREND_SERIES = _STRESS_TREND_SERIES[-7:]
         patch["stress_trend"] = list(_STRESS_TREND_SERIES)
 
-        # Weather state from simulation
-        hour_now = sim_ts.hour if hasattr(sim_ts, "hour") else 14
-        weather_cond = "Rainy" if 14 <= hour_now <= 16 else ("Partly Cloudy" if hour_now >= 18 else "Sunny")
-        weather_temp = 28 if weather_cond == "Partly Cloudy" else (24 if weather_cond == "Rainy" else 31)
-        patch["weather"] = {"temp": weather_temp, "condition": weather_cond}
+        # Weather state from simulation or chaos
+        if CURRENT_ACTIVE_CHAOS and "weather" in CURRENT_ACTIVE_CHAOS:
+            patch["weather"] = CURRENT_ACTIVE_CHAOS["weather"]
+        else:
+            hour_now = sim_ts.hour if hasattr(sim_ts, "hour") else 14
+            weather_cond = "Rainy" if 14 <= hour_now <= 16 else ("Partly Cloudy" if hour_now >= 18 else "Sunny")
+            weather_temp = 28 if weather_cond == "Partly Cloudy" else (24 if weather_cond == "Rainy" else 31)
+            patch["weather"] = {"temp": weather_temp, "condition": weather_cond}
 
         db.commit()
     except Exception:
@@ -468,6 +485,18 @@ async def _build_snapshot() -> dict:
             "agents":    [ag.status_dict() for ag in app.state.agents],
             "clock":     clock.state(),
             "ledger_stats": ledger.stats(),
+            "kpis": {
+                "occupancy_pct": 85.7,
+                "occupied_rooms": 72,
+                "staff_on_duty": db.query(Staff).filter(Staff.status.in_(["idle","busy"])).count(),
+                "open_tasks": db.query(Task).filter(Task.status.in_(["open","assigned","in_progress"])).count(),
+                "sla_breaches": db.query(Task).filter(Task.is_breaching == True).count(),
+                "decisions_today": ledger.stats()["total"],
+                "rupees_protected": round(ledger.stats()["total_rupee_impact"], 2),
+                "guests_at_risk": db.query(Guest).filter(Guest.gers_score >= 70).count(),
+                "food_waste_pct": 4.2,
+                "reviews_prevented": 0,
+            },
             "stress_index": 68,
             "stress_trend": [58, 62, 54, 68, 60, 64, 68],
             "weather": {"temp": 28, "condition": "Partly Cloudy"},

@@ -28,6 +28,8 @@ class WhatIfBody(BaseModel):
     has_event: bool = False
 
 
+CURRENT_ACTIVE_CHAOS = {}
+
 SCENARIOS = {
     "wedding_booking",
     "ac_failure_block_c",
@@ -35,26 +37,62 @@ SCENARIOS = {
     "staff_no_show",
     "bad_review_risk",
     "festival_weekend",
+    # Frontend aliases
+    "wedding_rush",
+    "monsoon_storm",
+    "staff_shortage",
+    "chiller_failure",
+    "vip_critical",
+}
+
+SCENARIO_ALIASES = {
+    "wedding_rush": "wedding_booking",
+    "monsoon_storm": "rain_tomorrow",
+    "staff_shortage": "staff_no_show",
+    "chiller_failure": "ac_failure_block_c",
+    "vip_critical": "bad_review_risk",
 }
 
 @router.post("/inject")
-async def inject_scenario(body: InjectBody):
-    if body.scenario not in SCENARIOS:
-        raise HTTPException(400, f"Unknown scenario. Valid: {SCENARIOS}")
+@router.post("/inject_scenario")
+async def inject_scenario(
+    body: InjectBody = None,
+    scenario: str = None,
+):
+    req_scenario = (body.scenario if body else None) or scenario
+    if not req_scenario or req_scenario not in SCENARIOS:
+        raise HTTPException(400, f"Unknown scenario: {req_scenario}. Valid: {SCENARIOS}")
 
+    scenario_name = SCENARIO_ALIASES.get(req_scenario, req_scenario)
     cascade_id = str(uuid.uuid4())
 
-    if body.scenario == "wedding_booking":
+    if scenario_name == "wedding_booking":
         db = SessionLocal()
         try:
             from backend.models.guests import Guest
+            from backend.models.resort import Room
+            # Mark up to 35 rooms as occupied to reflect 45 guests / wedding party
+            vacant = db.query(Room).filter(Room.status != "occupied").limit(35).all()
+            for r in vacant:
+                r.status = "occupied"
+            db.commit()
+
             guest = db.query(Guest).first()
             guest_id = guest.id if guest else 1
         finally:
             db.close()
 
+        CURRENT_ACTIVE_CHAOS.clear()
+        CURRENT_ACTIVE_CHAOS.update({
+            "scenario": req_scenario,
+            "name": "WEDDING INFLUX (ZONE 1 & 6)",
+            "occupancy_pct": 96.0,
+            "stress_index": 86,
+            "staff_load": 88,
+            "wait_min": 14,
+        })
+
         target_date = clock.sim_now + timedelta(days=3)
-        # Ensure date is a Saturday
         while target_date.weekday() != 5:
             target_date += timedelta(days=1)
 
@@ -82,7 +120,7 @@ async def inject_scenario(body: InjectBody):
             sim_ts=clock.sim_now,
         )
 
-    elif body.scenario == "ac_failure_block_c":
+    elif scenario_name == "ac_failure_block_c":
         db = SessionLocal()
         try:
             from backend.models.assets import Asset
@@ -94,6 +132,15 @@ async def inject_scenario(body: InjectBody):
                 db.commit()
         finally:
             db.close()
+
+        CURRENT_ACTIVE_CHAOS.clear()
+        CURRENT_ACTIVE_CHAOS.update({
+            "scenario": req_scenario,
+            "name": "CHILLER #2 COMPRESSOR BREAKDOWN",
+            "stress_index": 85,
+            "wait_min": 16,
+        })
+
         await bus.publish(
             "asset.reading",
             payload={"asset_id": asset_id, "metric": "cooling_temp", "value": 28.5, "anomaly": True},
@@ -102,7 +149,15 @@ async def inject_scenario(body: InjectBody):
             sim_ts=clock.sim_now,
         )
 
-    elif body.scenario == "rain_tomorrow":
+    elif scenario_name == "rain_tomorrow":
+        CURRENT_ACTIVE_CHAOS.clear()
+        CURRENT_ACTIVE_CHAOS.update({
+            "scenario": req_scenario,
+            "name": "MONSOON HIGH-TIDE STORM ALERT",
+            "stress_index": 78,
+            "weather": {"temp": 22, "condition": "Rainy"},
+        })
+
         await bus.publish(
             "weather.forecast_changed",
             payload={"from": "sunny", "to": "rain", "rain_prob": 0.85, "injected": True},
@@ -111,20 +166,28 @@ async def inject_scenario(body: InjectBody):
             sim_ts=clock.sim_now,
         )
 
-    elif body.scenario == "staff_no_show":
+    elif scenario_name == "staff_no_show":
         db = SessionLocal()
         try:
             from backend.models.people import Staff
-            s = db.query(Staff).filter(Staff.status == "idle").first()
-            if s:
+            idle_staff = db.query(Staff).filter(Staff.status == "idle").limit(4).all()
+            for s in idle_staff:
                 s.status = "off"
-                db.commit()
-                staff_id = s.id
-                staff_name = s.name
-            else:
-                staff_id, staff_name = 1, "Staff Member"
+            db.commit()
+            staff_id = idle_staff[0].id if idle_staff else 1
+            staff_name = idle_staff[0].name if idle_staff else "Staff Member"
         finally:
             db.close()
+
+        CURRENT_ACTIVE_CHAOS.clear()
+        CURRENT_ACTIVE_CHAOS.update({
+            "scenario": req_scenario,
+            "name": "SUDDEN SHIFT STAFF ABSENCE",
+            "stress_index": 82,
+            "staff_load": 92,
+            "wait_min": 22,
+        })
+
         await bus.publish(
             "staff.no_show",
             payload={"staff_id": staff_id, "staff_name": staff_name},
@@ -133,7 +196,7 @@ async def inject_scenario(body: InjectBody):
             sim_ts=clock.sim_now,
         )
 
-    elif body.scenario == "bad_review_risk":
+    elif scenario_name == "bad_review_risk":
         db = SessionLocal()
         try:
             from backend.models.guests import Guest
@@ -151,6 +214,14 @@ async def inject_scenario(body: InjectBody):
                 guest_id = 1
         finally:
             db.close()
+
+        CURRENT_ACTIVE_CHAOS.clear()
+        CURRENT_ACTIVE_CHAOS.update({
+            "scenario": req_scenario,
+            "name": "ULTRA-HNI VIP ARRIVAL (LOW GERS)",
+            "stress_index": 76,
+        })
+
         await bus.publish(
             "guest.risk_raised",
             payload={"guest_id": guest_id, "gers_score": 76.0, "band": "critical"},
@@ -159,7 +230,15 @@ async def inject_scenario(body: InjectBody):
             sim_ts=clock.sim_now,
         )
 
-    elif body.scenario == "festival_weekend":
+    elif scenario_name == "festival_weekend":
+        CURRENT_ACTIVE_CHAOS.clear()
+        CURRENT_ACTIVE_CHAOS.update({
+            "scenario": req_scenario,
+            "name": "FESTIVAL WEEKEND DEMAND",
+            "occupancy_pct": 98.0,
+            "stress_index": 88,
+        })
+
         await bus.publish(
             "calendar.event_added",
             payload={
@@ -173,7 +252,12 @@ async def inject_scenario(body: InjectBody):
             sim_ts=clock.sim_now,
         )
 
-    return {"cascade_id": cascade_id, "scenario": body.scenario, "sim_ts": clock.sim_now.isoformat()}
+    return {
+        "cascade_id": cascade_id,
+        "scenario": req_scenario,
+        "active_chaos": CURRENT_ACTIVE_CHAOS,
+        "sim_ts": clock.sim_now.isoformat()
+    }
 
 
 @router.post("/whatif")
@@ -237,8 +321,10 @@ def what_if(body: WhatIfBody):
 
 
 @router.post("/reset")
+@router.post("/reset_demo")
 async def reset_demo():
     """Reset to a known demo state in < 5 seconds."""
+    CURRENT_ACTIVE_CHAOS.clear()
     db = SessionLocal()
     try:
         # Reset clock

@@ -217,6 +217,17 @@ async def create_personalized_booking(req: PersonalizedBookingRequest, db: Sessi
         recommended_bundle=json.dumps(bundle_record),
     )
     db.add(booking)
+
+    # Allocate rooms for party size and mark as occupied
+    try:
+        from backend.models.resort import Room
+        rooms_needed = max(1, (req.party_size + 1) // 2)
+        vacant_rooms = db.query(Room).filter(Room.status != "occupied").limit(rooms_needed).all()
+        for vr in vacant_rooms:
+            vr.status = "occupied"
+    except Exception:
+        pass
+
     db.commit()
     db.refresh(booking)
 

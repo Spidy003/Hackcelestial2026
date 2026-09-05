@@ -166,8 +166,18 @@ export default function OwnerWeeklySummaryPage() {
     }
   }, [clock?.sim_now])
 
-  const occPct = Math.round(kpis?.occupancy_pct || 91)
-  const occupiedRooms = kpis?.occupied_rooms || 76
+  const localActiveBookings = useMemo(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        return JSON.parse(localStorage.getItem('resort_active_bookings') || '[]')
+      }
+    } catch {}
+    return []
+  }, [])
+  const addedRooms = localActiveBookings.reduce((sum: number, b: any) => sum + Math.max(1, Math.ceil((b.party_size || 2) / 2)), 0)
+
+  const occupiedRooms = Math.min(84, Math.max(76, (kpis?.occupied_rooms && kpis.occupied_rooms > 40 ? kpis.occupied_rooms : 76) + addedRooms))
+  const occPct = Math.min(99, Math.round((occupiedRooms / 84) * 100))
   const thisWeekRevenue = (occupiedRooms * 8500 * 7) + 1358000 // ~₹5.88M
   const prevWeekRevenue = 5240000
   const netGain = thisWeekRevenue - prevWeekRevenue

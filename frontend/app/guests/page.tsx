@@ -379,6 +379,7 @@ export default function GuestsExperiencePage() {
           bundle: selectedOccasion.recommendedBundle
         })
         localStorage.setItem('resort_active_bookings', JSON.stringify(saved))
+        window.dispatchEvent(new Event('resort-active-bookings-change'))
         window.dispatchEvent(new Event('storage'))
       } catch (e) {}
 
