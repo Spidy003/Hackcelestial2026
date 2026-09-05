@@ -231,9 +231,10 @@ export default function OwnerDashboardPage() {
     return 'Good evening, Manager 👋'
   }, [simDate.hour])
 
-  // ── Live Active Bookings (from /guests) & Active Chaos (from /simulate) ──
+  // ── Live Active Bookings (from /guests) & Active Chaos (from /simulate) & Checkouts ──
   const [activeBookings, setActiveBookings] = useState<any[]>([])
   const [activeChaos, setActiveChaos] = useState<any>(null)
+  const [checkedOutCount, setCheckedOutCount] = useState<number>(0)
 
   useEffect(() => {
     const syncLocal = () => {
@@ -245,15 +246,21 @@ export default function OwnerDashboardPage() {
         const c = JSON.parse(localStorage.getItem('resort_active_chaos') || 'null')
         setActiveChaos(c)
       } catch {}
+      try {
+        const co = JSON.parse(localStorage.getItem('resort_checked_out_guests') || '[]')
+        setCheckedOutCount(co.length)
+      } catch {}
     }
     syncLocal()
     window.addEventListener('storage', syncLocal)
     window.addEventListener('resort-chaos-change', syncLocal)
     window.addEventListener('resort-active-bookings-change', syncLocal)
+    window.addEventListener('resort-guest-checkout', syncLocal)
     return () => {
       window.removeEventListener('storage', syncLocal)
       window.removeEventListener('resort-chaos-change', syncLocal)
       window.removeEventListener('resort-active-bookings-change', syncLocal)
+      window.removeEventListener('resort-guest-checkout', syncLocal)
     }
   }, [])
 
@@ -274,10 +281,10 @@ export default function OwnerDashboardPage() {
   const isVip = activeChaos?.scenarioId === 'vip_critical'
 
   // Occupied rooms & occupancy pct:
-  // Base from backend (or fallback to healthy 76 rooms)
+  // Base from backend (or fallback to healthy 76 rooms) - minus real-time checkouts
   const baseOccupied = (kpis?.occupied_rooms && kpis.occupied_rooms > 40) ? kpis.occupied_rooms : 76
   const chaosRoomBoost = isWeddingRush ? 6 : 0
-  const occupiedRooms = Math.min(84, Math.max(74, baseOccupied + addedRoomsFromUser + chaosRoomBoost))
+  const occupiedRooms = Math.min(84, Math.max(0, baseOccupied + addedRoomsFromUser + chaosRoomBoost - checkedOutCount))
   const occPct = isWeddingRush ? 98 : Math.min(99, Math.round((occupiedRooms / 84) * 100))
 
   const staffList = Object.values(staff || {})

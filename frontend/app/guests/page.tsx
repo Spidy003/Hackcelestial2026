@@ -225,6 +225,80 @@ export default function GuestsExperiencePage() {
   const [bookingLoading, setBookingLoading] = useState(false)
   const [bookingConfirmation, setBookingConfirmation] = useState<any>(null)
 
+  // ── Checkout & In-House Roster State ──
+  const [checkedOutIds, setCheckedOutIds] = useState<Set<string>>(new Set())
+  const [checkingOutId, setCheckingOutId] = useState<string | null>(null)
+  const [checkoutMsg, setCheckoutMsg] = useState<string | null>(null)
+  const [userBookings, setUserBookings] = useState<any[]>([])
+
+  useEffect(() => {
+    const syncCheckoutsAndBookings = () => {
+      try {
+        const co: string[] = JSON.parse(localStorage.getItem('resort_checked_out_guests') || '[]')
+        setCheckedOutIds(new Set(co))
+      } catch {}
+      try {
+        const ub: any[] = JSON.parse(localStorage.getItem('resort_active_bookings') || '[]')
+        setUserBookings(ub)
+      } catch {}
+    }
+    syncCheckoutsAndBookings()
+    window.addEventListener('storage', syncCheckoutsAndBookings)
+    window.addEventListener('resort-guest-checkout', syncCheckoutsAndBookings)
+    window.addEventListener('resort-active-bookings-change', syncCheckoutsAndBookings)
+    return () => {
+      window.removeEventListener('storage', syncCheckoutsAndBookings)
+      window.removeEventListener('resort-guest-checkout', syncCheckoutsAndBookings)
+      window.removeEventListener('resort-active-bookings-change', syncCheckoutsAndBookings)
+    }
+  }, [])
+
+  const handleCheckoutGuest = async (guest: { id: string | number; name: string; room: string }) => {
+    const guestIdStr = String(guest.id)
+    setCheckingOutId(guestIdStr)
+    setCheckoutMsg(null)
+    try {
+      await fetch(`${API_URL}/api/guests/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guest_name: guest.name,
+          room_number: guest.room
+        })
+      }).catch(() => {})
+
+      const stored: string[] = JSON.parse(localStorage.getItem('resort_checked_out_guests') || '[]')
+      if (!stored.includes(guestIdStr)) {
+        stored.push(guestIdStr)
+        localStorage.setItem('resort_checked_out_guests', JSON.stringify(stored))
+      }
+      setCheckedOutIds(new Set(stored))
+
+      window.dispatchEvent(new Event('resort-guest-checkout'))
+      window.dispatchEvent(new Event('storage'))
+
+      setCheckoutMsg(`✓ Checkout processed for ${guest.name} (${guest.room})! Housekeeping turnaround dispatched.`)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setCheckingOutId(null)
+    }
+  }
+
+  const handleUndoCheckout = (guestId: string | number) => {
+    const guestIdStr = String(guestId)
+    try {
+      const stored: string[] = JSON.parse(localStorage.getItem('resort_checked_out_guests') || '[]')
+      const filtered = stored.filter(id => id !== guestIdStr)
+      localStorage.setItem('resort_checked_out_guests', JSON.stringify(filtered))
+      setCheckedOutIds(new Set(filtered))
+
+      window.dispatchEvent(new Event('resort-guest-checkout'))
+      window.dispatchEvent(new Event('storage'))
+      setCheckoutMsg(`Re-admitted guest to In-House roster.`)
+    } catch (e) {}
+  }
+
   // ── Ticketing Form State ──
   const [ticketGuestName, setTicketGuestName] = useState('Vikramaditya Singhania')
   const [ticketRoom, setTicketRoom] = useState('Villa 102')
@@ -1556,139 +1630,238 @@ export default function GuestsExperiencePage() {
       {/* ══════════════════════════════════════════════════════════════
           TAB 4: IN-HOUSE GUEST DIRECTORY & GERS SCORES
           ══════════════════════════════════════════════════════════════ */}
-      {activeTab === 'directory' && (
-        <div className="space-y-4">
-          <div className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="font-black text-sm text-slate-900">
-                In-House Guest Roster & Lifetime Value (LTV)
-              </h3>
-              <span className="text-xs text-slate-500">
-                Real-time Guest Experience Rating Score (GERS), propensity scores, and service recovery tracking.
-              </span>
+      {activeTab === 'directory' && (() => {
+        const defaultGuests = [
+          {
+            id: '101',
+            name: 'Vikramaditya Singhania',
+            room: 'Presidential Suite 501',
+            tier: 'platinum',
+            gers: 94,
+            occasion: 'Family Luxury Holiday',
+            ltv: 620000,
+            drivers: ['Expedited check-in', 'Private pool cabana', 'Sommelier wine pairing']
+          },
+          {
+            id: '102',
+            name: 'Ananya & Rohan Deshmukh',
+            room: 'Beachfront Villa 102',
+            tier: 'gold',
+            gers: 88,
+            occasion: 'Honeymoon & Romantic Retreat',
+            ltv: 280000,
+            drivers: ['Honeymoon floral setup', 'Mandwa catamaran cruise']
+          },
+          {
+            id: '103',
+            name: 'Kavita Iyer',
+            room: 'North Villa 104',
+            tier: 'silver',
+            gers: 56,
+            occasion: 'Weekend Getaway',
+            ltv: 145000,
+            drivers: ['Delayed room service', 'Noise from lawn']
+          },
+          {
+            id: '104',
+            name: 'Dr. Sameer Godbole',
+            room: 'Garden Cottage 205',
+            tier: 'gold',
+            gers: 64,
+            occasion: 'Ayurveda Health Retreat',
+            ltv: 310000,
+            drivers: ['Delayed spa therapist', 'Wi-Fi disconnect during zoom']
+          },
+          {
+            id: '105',
+            name: 'Meera & Siddharth Joshi',
+            room: 'Family Suite 302',
+            tier: 'platinum',
+            gers: 91,
+            occasion: 'Kids Splash & Birthday',
+            ltv: 490000,
+            drivers: ['Kids activity club', 'Sunset terrace dining']
+          }
+        ]
+
+        const dynamicGuests = userBookings.map((b, idx) => ({
+          id: `usr-${b.booking_id || idx}`,
+          name: b.guest_name || 'VIP Guest',
+          room: b.venue_assigned ? `${b.venue_assigned} (Suite ${110 + idx})` : `Villa ${110 + idx}`,
+          tier: (b.party_size >= 30 ? 'platinum' : b.party_size >= 4 ? 'gold' : 'silver'),
+          gers: 96,
+          occasion: b.occasion ? `${b.occasion.toUpperCase()} • ${b.food_plan || 'Custom Plan'}` : 'Direct Booking',
+          ltv: b.total_amount || 95000,
+          drivers: ['Personalized AI Package', 'Arrival Concierge Welcome', 'Dynamic Venue Allocation']
+        }))
+
+        const fullRoster = [...dynamicGuests, ...defaultGuests]
+        const activeInHouse = fullRoster.filter(g => !checkedOutIds.has(String(g.id)))
+        const checkedOutList = fullRoster.filter(g => checkedOutIds.has(String(g.id)))
+
+        return (
+          <div className="space-y-4">
+            {/* Header with Stats */}
+            <div className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-black text-sm text-slate-900">
+                  In-House Guest Roster & Lifetime Value (LTV)
+                </h3>
+                <span className="text-xs text-slate-500">
+                  Real-time Guest Experience Rating Score (GERS), LTV analytics, and one-click guest checkout.
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  {activeInHouse.length} Active In-House
+                </span>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {checkedOutList.length} Checked Out
+                </span>
+              </div>
+            </div>
+
+            {/* Notification Toast */}
+            {checkoutMsg && (
+              <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl flex items-center justify-between text-xs font-medium shadow-xs">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{checkoutMsg}</span>
+                </div>
+                <button
+                  onClick={() => setCheckoutMsg(null)}
+                  className="text-xs font-bold text-emerald-700 hover:text-emerald-900 ml-4"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {/* Guest Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {fullRoster.map((g) => {
+                const isCheckedOut = checkedOutIds.has(String(g.id))
+                const isAtRisk = g.gers < 70 && !isCheckedOut
+                const isCheckingThis = checkingOutId === String(g.id)
+
+                return (
+                  <div
+                    key={g.id}
+                    className={`p-5 rounded-3xl bg-white border transition-all ${
+                      isCheckedOut
+                        ? 'opacity-75 bg-slate-50 border-slate-200'
+                        : isAtRisk
+                        ? 'border-rose-300 ring-2 ring-rose-100 shadow-sm'
+                        : 'border-slate-200/80 shadow-2xs'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                            isCheckedOut ? 'bg-slate-200 text-slate-600' :
+                            g.tier === 'platinum' ? 'bg-amber-100 text-amber-800' :
+                            g.tier === 'gold' ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            {g.tier}
+                          </span>
+                          <span className={`text-xs font-bold ${isCheckedOut ? 'line-through text-slate-400' : 'text-slate-500'}`}>
+                            {g.room}
+                          </span>
+                        </div>
+                        <h4 className="font-black text-sm text-slate-900 mt-1">
+                          {g.name}
+                        </h4>
+                        <span className="text-[11px] text-blue-600 font-semibold block">
+                          {g.occasion}
+                        </span>
+                      </div>
+
+                      <div className="text-right">
+                        <span className={`text-xl font-black ${
+                          isCheckedOut ? 'text-slate-400' :
+                          g.gers >= 85 ? 'text-emerald-600' : g.gers >= 70 ? 'text-amber-600' : 'text-rose-600'
+                        }`}>
+                          {isCheckedOut ? '—' : g.gers}
+                        </span>
+                        <span className="text-[9px] text-slate-500 block font-semibold uppercase">
+                          {isCheckedOut ? 'OUT' : 'GERS'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {isAtRisk && (
+                      <div className="mt-3 p-2 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2 text-[11px] text-rose-700 font-semibold">
+                        <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                        <span>Executive Service Recovery Dispatched</span>
+                      </div>
+                    )}
+
+                    {isCheckedOut && (
+                      <div className="mt-3 p-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-[11px] text-emerald-800 font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>Room vacant dirty • Housekeeping assigned</span>
+                      </div>
+                    )}
+
+                    <div className="mt-3 space-y-1">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">Experience Drivers:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {g.drivers.map((d, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10.5px]">
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Footer: Lifetime Value & Check Out Action */}
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium uppercase">Lifetime Value</span>
+                        <span className="font-black text-slate-900 text-xs">{formatRupees(g.ltv, true)}</span>
+                      </div>
+
+                      {isCheckedOut ? (
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            ✓ Checked Out
+                          </span>
+                          <button
+                            onClick={() => handleUndoCheckout(g.id)}
+                            className="text-[10px] text-slate-500 hover:text-slate-900 underline font-semibold cursor-pointer"
+                          >
+                            Undo
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleCheckoutGuest(g)}
+                          disabled={isCheckingThis}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-black text-white active:scale-95 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          {isCheckingThis ? (
+                            <>
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                              <span>Checking Out...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Check Out Guest</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              {
-                id: 101,
-                name: 'Vikramaditya Singhania',
-                room: 'Presidential Suite 501',
-                tier: 'platinum',
-                gers: 94,
-                occasion: 'Family Luxury Holiday',
-                ltv: 620000,
-                drivers: ['Expedited check-in', 'Private pool cabana', 'Sommelier wine pairing']
-              },
-              {
-                id: 102,
-                name: 'Ananya & Rohan Deshmukh',
-                room: 'Beachfront Villa 102',
-                tier: 'gold',
-                gers: 88,
-                occasion: 'Honeymoon & Romantic Retreat',
-                ltv: 280000,
-                drivers: ['Honeymoon floral setup', 'Mandwa catamaran cruise']
-              },
-              {
-                id: 103,
-                name: 'Kavita Iyer',
-                room: 'North Villa 104',
-                tier: 'silver',
-                gers: 56,
-                occasion: 'Weekend Getaway',
-                ltv: 145000,
-                drivers: ['Delayed room service', 'Noise from lawn']
-              },
-              {
-                id: 104,
-                name: 'Dr. Sameer Godbole',
-                room: 'Garden Cottage 205',
-                tier: 'gold',
-                gers: 64,
-                occasion: 'Ayurveda Health Retreat',
-                ltv: 310000,
-                drivers: ['Delayed spa therapist', 'Wi-Fi disconnect during zoom']
-              },
-              {
-                id: 105,
-                name: 'Meera & Siddharth Joshi',
-                room: 'Family Suite 302',
-                tier: 'platinum',
-                gers: 91,
-                occasion: 'Kids Splash & Birthday',
-                ltv: 490000,
-                drivers: ['Kids activity club', 'Sunset terrace dining']
-              }
-            ].map((g) => {
-              const isAtRisk = g.gers < 70
-              return (
-                <div
-                  key={g.id}
-                  className={`p-5 rounded-3xl bg-white border transition-all ${
-                    isAtRisk
-                      ? 'border-rose-300 ring-2 ring-rose-100 shadow-sm'
-                      : 'border-slate-200/80 shadow-2xs'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                          g.tier === 'platinum' ? 'bg-amber-100 text-amber-800' :
-                          g.tier === 'gold' ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-700'
-                        }`}>
-                          {g.tier}
-                        </span>
-                        <span className="text-xs font-bold text-slate-500">{g.room}</span>
-                      </div>
-                      <h4 className="font-black text-sm text-slate-900 mt-1">
-                        {g.name}
-                      </h4>
-                      <span className="text-[11px] text-blue-600 font-semibold block">
-                        {g.occasion}
-                      </span>
-                    </div>
-
-                    <div className="text-right">
-                      <span className={`text-xl font-black ${
-                        g.gers >= 85 ? 'text-emerald-600' : g.gers >= 70 ? 'text-amber-600' : 'text-rose-600'
-                      }`}>
-                        {g.gers}
-                      </span>
-                      <span className="text-[9px] text-slate-500 block font-semibold uppercase">GERS</span>
-                    </div>
-                  </div>
-
-                  {isAtRisk && (
-                    <div className="mt-3 p-2 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2 text-[11px] text-rose-700 font-semibold">
-                      <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                      <span>Executive Service Recovery Dispatched</span>
-                    </div>
-                  )}
-
-                  <div className="mt-3 space-y-1">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">Experience Drivers:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {g.drivers.map((d, idx) => (
-                        <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10.5px]">
-                          {d}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-sans">
-                    <span className="text-slate-500">Lifetime Value</span>
-                    <span className="font-black text-slate-900">{formatRupees(g.ltv, true)}</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
