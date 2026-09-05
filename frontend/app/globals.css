@@ -497,3 +497,228 @@ body {
   transform: scale(0.98);
 }
 
+/* ============================================================
+   8BITCN THEME (EXACT MATCH TO REFERENCE IMAGE)
+   - Pure crisp white background (#ffffff)
+   - Heavy solid black borders (3px solid #000000)
+   - Hard drop shadows (4px 4px 0px #000000)
+   - Stepped pill buttons: "Button", "EASY", "NORMAL", "HARD", "Login"
+   - Solid black & charcoal paired bar charts: "Desktop vs Mobile visitors"
+   - Segmented red/black pixel health meter: "Health 75%", "Health 45%"
+   - Retro pixel sliders & toggles: "Audio Settings"
+   ============================================================ */
+
+.theme-8bitcn {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  font-family: 'IBM Plex Mono', 'Press Start 2P', monospace !important;
+}
+
+.theme-8bitcn body {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Card overrides in 8bitcn mode */
+.theme-8bitcn .neumorph-card,
+.theme-8bitcn .neumorph-card-sm,
+.theme-8bitcn .pixel-box {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+}
+
+.theme-8bitcn .neumorph-inset {
+  background-color: #f8fafc !important;
+  border: 2px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0px #000000 inset !important;
+}
+
+/* Button overrides in 8bitcn mode */
+.theme-8bitcn .neumorph-btn {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  border-radius: 9999px !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 8.5px !important;
+  text-transform: uppercase !important;
+}
+
+.theme-8bitcn .neumorph-btn:hover {
+  background-color: #f1f5f9 !important;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #000000 !important;
+}
+
+.theme-8bitcn .neumorph-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000000 !important;
+}
+
+.theme-8bitcn .neumorph-btn-blue {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #000000 !important;
+  border-radius: 9999px !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 8.5px !important;
+  text-transform: uppercase !important;
+}
+
+.theme-8bitcn .neumorph-btn-blue:hover {
+  background: #262626 !important;
+  color: #ffffff !important;
+}
+
+/* Sidebar & Headers in 8bitcn mode */
+.theme-8bitcn aside {
+  background-color: #ffffff !important;
+  border-right: 3px solid #000000 !important;
+  box-shadow: 4px 0px 0px #000000 !important;
+}
+
+.theme-8bitcn header {
+  background-color: #ffffff !important;
+  border: 3px solid #000000 !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+  border-radius: 4px !important;
+}
+
+/* Text overrides in 8bitcn mode */
+.theme-8bitcn h1,
+.theme-8bitcn h2,
+.theme-8bitcn h3,
+.theme-8bitcn h4 {
+  font-family: 'Press Start 2P', monospace !important;
+  color: #000000 !important;
+  letter-spacing: -0.05em;
+}
+
+.theme-8bitcn .text-slate-900,
+.theme-8bitcn .text-slate-800,
+.theme-8bitcn .text-slate-700 {
+  color: #000000 !important;
+}
+
+.theme-8bitcn .text-slate-500,
+.theme-8bitcn .text-slate-600 {
+  color: #4b5563 !important;
+}
+
+/* 8bitcn Pill Buttons (Exact to reference image) */
+.pixel-pill-black {
+  background-color: #000000;
+  color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 9999px;
+  box-shadow: 3px 3px 0px #000000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  text-transform: uppercase;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+.pixel-pill-black:hover {
+  background-color: #262626;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #000000;
+}
+.pixel-pill-black:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+.pixel-pill-white {
+  background-color: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 9999px;
+  box-shadow: 3px 3px 0px #000000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  text-transform: uppercase;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+.pixel-pill-white:hover {
+  background-color: #f1f5f9;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #000000;
+}
+.pixel-pill-white:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+/* 8bitcn Health Segmented Bar (Exact to reference image) */
+.pixel-health-meter {
+  background-color: #ffffff;
+  border: 2px solid #000000;
+  height: 16px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 2px 2px 0px #000000;
+}
+.pixel-health-segmented {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    #dc2626 0px,
+    #dc2626 7px,
+    #000000 7px,
+    #000000 9px
+  );
+  border-right: 2px solid #000000;
+  transition: width 0.3s ease;
+}
+
+.pixel-health-segmented-dark {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    #111827 0px,
+    #111827 7px,
+    #ffffff 7px,
+    #ffffff 9px
+  );
+  border-right: 2px solid #000000;
+  transition: width 0.3s ease;
+}
+
+/* 8bitcn Sliders */
+.pixel-slider-track {
+  position: relative;
+  height: 8px;
+  background-color: #000000;
+  border: 1px solid #000000;
+  border-radius: 9999px;
+}
+.pixel-slider-thumb {
+  width: 12px;
+  height: 18px;
+  background-color: #000000;
+  border: 2px solid #ffffff;
+  box-shadow: 1px 1px 0px #000000;
+}
+

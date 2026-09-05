@@ -11,8 +11,11 @@ import {
   ArrowUpRight, ArrowDownRight, Clock, FileText, 
   Check, X, Sparkles, Zap, Bell, ShieldAlert,
   Flame, Building2, Users, UserCheck, Package, ShoppingCart,
-  Plus, Minus, RefreshCw
+  Plus, Minus, RefreshCw, Layers
 } from 'lucide-react'
+import { useOwnerTheme } from '@/lib/owner-theme'
+import Retro8BitcnWidget from '@/components/Retro8BitcnWidget'
+
 
 interface AlertItem {
   id: string
@@ -182,6 +185,7 @@ export default function OwnerDashboardPage() {
     clock, kpis, zones, staff, tasks, 
     decisions, stress_index, stress_trend, weather 
   } = useResortStore()
+  const { theme, toggleTheme, is8Bit } = useOwnerTheme()
 
   // Modal states for middle-of-screen popup
   const [activeModalAlert, setActiveModalAlert] = useState<AlertItem | null>(null)
@@ -1144,24 +1148,47 @@ export default function OwnerDashboardPage() {
   }
 
   return (
-    <div className="h-full max-h-full overflow-hidden flex flex-col justify-between p-2.5 lg:p-3 gap-2">
+    <div className={`h-full max-h-full ${is8Bit ? 'overflow-y-auto' : 'overflow-hidden'} flex flex-col justify-between p-2.5 lg:p-3 gap-2 scrollbar-thin`}>
       {/* ══════════════════════════════════════════════════════════════
           TOP BAR: Greeting, Date/Time, Live Indicator, Weather, Alert Count & Restock Pill
           ══════════════════════════════════════════════════════════════ */}
-      <header className="shrink-0 h-11 neumorph-card px-3 sm:px-4 flex items-center justify-between gap-2">
+      <header className={`shrink-0 min-h-11 py-1.5 ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000] rounded-none' : 'neumorph-card'} px-3 sm:px-4 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap`}>
         <div className="flex items-center gap-2.5">
-          <h1 className="font-bold text-xs sm:text-sm text-slate-900 tracking-tight">
+          <h1 className={`font-bold text-xs sm:text-sm tracking-tight ${is8Bit ? 'font-pixel text-[11px] text-black' : 'text-slate-900'}`}>
             {greeting}
           </h1>
-          <span className="hidden md:inline-block text-[11px] text-slate-500 font-medium border-l border-slate-300 pl-2.5">
+          <span className={`hidden md:inline-block text-[11px] font-medium border-l pl-2.5 ${is8Bit ? 'border-black text-black font-pixel text-[9px]' : 'border-slate-300 text-slate-500'}`}>
             Resort Operations Suite
           </span>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs flex-wrap">
+          {/* 🕹️ Theme Switch Button (Switch between Executive UI and 8bitcn UI) */}
+          <button
+            onClick={toggleTheme}
+            className={`flex items-center gap-1.5 px-3 py-1 font-bold cursor-pointer transition-transform active:translate-x-[2px] active:translate-y-[2px] ${
+              is8Bit
+                ? 'pixel-pill-black text-[9px] rounded-full shadow-[2px_2px_0px_#000]'
+                : 'rounded-full text-[11px] bg-slate-900 text-white hover:bg-black border border-slate-700 shadow-xs'
+            }`}
+            title="Switch between Executive UI and 8bitcn Retro UI"
+          >
+            {is8Bit ? (
+              <>
+                <Layers className="w-3 h-3 text-emerald-400" />
+                <span className="font-pixel text-[9px]">👔 EXECUTIVE UI</span>
+              </>
+            ) : (
+              <>
+                <span className="animate-pulse">🕹️</span>
+                <span className="font-pixel text-[9px] text-[#00ff66]">8BITCN UI</span>
+              </>
+            )}
+          </button>
+
           {/* Live Indicator */}
-          <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+          <div className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold shadow-xs ${is8Bit ? 'bg-black text-white border border-black font-pixel text-[8px]' : 'bg-emerald-50 text-emerald-700'}`}>
+            <span className={`w-2 h-2 rounded-full ${is8Bit ? 'bg-[#00ff66]' : 'bg-emerald-500 animate-ping'}`} />
             <span className="text-[10px] tracking-wide">LIVE</span>
           </div>
 
@@ -1172,7 +1199,9 @@ export default function OwnerDashboardPage() {
               setShowInventoryModal(true)
             }}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold shadow-xs transition-colors cursor-pointer text-[11px] border ${
-              pendingRestockCount === 0
+              is8Bit
+                ? 'bg-white text-black border-2 border-black font-pixel text-[9px] shadow-[2px_2px_0px_#000]'
+                : pendingRestockCount === 0
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-300/80 hover:bg-emerald-100'
                 : 'bg-blue-50 text-blue-800 border-blue-200/60 hover:bg-blue-100'
             }`}
@@ -1180,37 +1209,37 @@ export default function OwnerDashboardPage() {
           >
             {pendingRestockCount === 0 ? (
               <>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <CheckCircle2 className={`w-3.5 h-3.5 ${is8Bit ? 'text-black' : 'text-emerald-600'}`} />
                 <span>All Par Levels Secured</span>
               </>
             ) : (
               <>
-                <Package className="w-3.5 h-3.5 text-blue-600" />
+                <Package className={`w-3.5 h-3.5 ${is8Bit ? 'text-black' : 'text-blue-600'}`} />
                 <span>Restock Orders ({pendingRestockCount})</span>
-                <span className="hidden sm:inline text-blue-600 font-normal">• {formatRupees(totalRestockCost, true)}</span>
+                <span className="hidden sm:inline font-normal">• {formatRupees(totalRestockCost, true)}</span>
               </>
             )}
           </button>
 
           {/* Weather Chip */}
-          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white shadow-xs font-medium text-slate-700 text-[11px]">
+          <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shadow-xs font-medium text-[11px] ${is8Bit ? 'bg-white text-black border-2 border-black font-pixel text-[9px]' : 'bg-white text-slate-700'}`}>
             {weather?.condition === 'Rainy' ? (
-              <CloudRain className="w-3.5 h-3.5 text-blue-600" />
+              <CloudRain className={`w-3.5 h-3.5 ${is8Bit ? 'text-black' : 'text-blue-600'}`} />
             ) : (
-              <CloudSun className="w-3.5 h-3.5 text-amber-500" />
+              <CloudSun className={`w-3.5 h-3.5 ${is8Bit ? 'text-black' : 'text-amber-500'}`} />
             )}
             <span>{weather?.temp || 28}°C {weather?.condition || 'Clear Ocean'}</span>
           </div>
 
           {/* Simulated Date & Time */}
-          <div className="hidden sm:flex items-center px-2.5 py-0.5 rounded-full bg-white shadow-xs font-medium text-slate-700 text-[11px]">
+          <div className={`hidden sm:flex items-center px-2.5 py-0.5 rounded-full shadow-xs font-medium text-[11px] ${is8Bit ? 'bg-white text-black border-2 border-black font-pixel text-[8px]' : 'bg-white text-slate-700'}`}>
             {simDate.formatted}
           </div>
 
           {/* Alert Count Pill */}
           <button
             onClick={() => alertItems.length > 0 && setActiveModalAlert(alertItems[0])}
-            className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold shadow-xs hover:bg-rose-100 transition-colors cursor-pointer text-[11px]"
+            className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold shadow-xs cursor-pointer text-[11px] ${is8Bit ? 'bg-white text-rose-700 border-2 border-black font-pixel text-[8px]' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}
             title="Click to view urgent alert"
           >
             <Bell className="w-3.5 h-3.5 text-rose-600" />
@@ -1218,6 +1247,30 @@ export default function OwnerDashboardPage() {
           </button>
         </div>
       </header>
+
+      {/* ── 8bitcn Special Widget: Desktop vs Mobile Visitors Chart, Select Difficulty & Audio Settings (Exact Match to Reference Image) ── */}
+      {is8Bit && (
+        <div className="shrink-0 animate-in fade-in duration-150">
+          <Retro8BitcnWidget
+            activeDifficulty={
+              selectedScenario.includes('98%') ? 'NORMAL' : selectedScenario.includes('Monsoon') ? 'HARD' : 'EASY'
+            }
+            onSelectDifficulty={(lvl) => {
+              if (lvl === 'EASY') {
+                setSelectedScenario('Low Season / 65% Occupancy')
+                setSimulationResult('EASY MODE (65% Occ): Staff load at 42%. 18 team members available on standby.')
+              } else if (lvl === 'NORMAL') {
+                setSelectedScenario('98% Occupancy — evening peak')
+                setSimulationResult('NORMAL MODE (91% Occ): Peak evening rush. Pool & Mandwa Dining operating at optimal capacity.')
+              } else if (lvl === 'HARD') {
+                setSelectedScenario('Sudden Monsoon Storm (3 PM)')
+                setSimulationResult('HARD MODE (Monsoon Storm): High coastal winds. Pool cleared, indoor dining & spa surged +45%.')
+              }
+            }}
+          />
+        </div>
+      )}
+
 
 
       {/* ══════════════════════════════════════════════════════════════
