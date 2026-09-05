@@ -6,8 +6,9 @@
  */
 
 export const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  process.env.NEXT_PUBLIC_API_URL || 'https://smart-resort-backend.onrender.com'
 ).replace(/\/$/, '')
 
 export const WS_URL =
   (process.env.NEXT_PUBLIC_WS_URL || API_URL.replace(/^http/, 'ws')) + '/ws'
+
