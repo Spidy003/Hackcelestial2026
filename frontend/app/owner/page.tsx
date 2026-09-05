@@ -1148,7 +1148,7 @@ export default function OwnerDashboardPage() {
   }
 
   return (
-    <div className={`h-full max-h-full ${is8Bit ? 'overflow-y-auto' : 'overflow-hidden'} flex flex-col justify-between p-2.5 lg:p-3 gap-2 scrollbar-thin`}>
+    <div className="h-full max-h-full overflow-hidden flex flex-col justify-between p-2.5 lg:p-3 gap-2">
       {/* ══════════════════════════════════════════════════════════════
           TOP BAR: Greeting, Date/Time, Live Indicator, Weather, Alert Count & Restock Pill
           ══════════════════════════════════════════════════════════════ */}
@@ -1248,28 +1248,6 @@ export default function OwnerDashboardPage() {
         </div>
       </header>
 
-      {/* ── 8bitcn Special Widget: Desktop vs Mobile Visitors Chart, Select Difficulty & Audio Settings (Exact Match to Reference Image) ── */}
-      {is8Bit && (
-        <div className="shrink-0 animate-in fade-in duration-150">
-          <Retro8BitcnWidget
-            activeDifficulty={
-              selectedScenario.includes('98%') ? 'NORMAL' : selectedScenario.includes('Monsoon') ? 'HARD' : 'EASY'
-            }
-            onSelectDifficulty={(lvl) => {
-              if (lvl === 'EASY') {
-                setSelectedScenario('Low Season / 65% Occupancy')
-                setSimulationResult('EASY MODE (65% Occ): Staff load at 42%. 18 team members available on standby.')
-              } else if (lvl === 'NORMAL') {
-                setSelectedScenario('98% Occupancy — evening peak')
-                setSimulationResult('NORMAL MODE (91% Occ): Peak evening rush. Pool & Mandwa Dining operating at optimal capacity.')
-              } else if (lvl === 'HARD') {
-                setSelectedScenario('Sudden Monsoon Storm (3 PM)')
-                setSimulationResult('HARD MODE (Monsoon Storm): High coastal winds. Pool cleared, indoor dining & spa surged +45%.')
-              }
-            }}
-          />
-        </div>
-      )}
 
 
 
@@ -1578,178 +1556,268 @@ export default function OwnerDashboardPage() {
           ══════════════════════════════════════════════════════════════ */}
       <section className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-2">
         {/* 1. OCCUPANCY */}
-        <div className="p-2.5 neumorph-card flex items-center justify-between">
+        <div className={`p-2.5 flex items-center justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
           <div>
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide block">
+            <span className={`block uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
               OCCUPANCY
             </span>
-            <span className="text-xl sm:text-2xl font-black text-slate-900 my-0.5 block leading-none">
+            <span className={`my-0.5 block leading-none font-black ${is8Bit ? 'font-pixel text-lg sm:text-xl text-black' : 'text-xl sm:text-2xl text-slate-900'}`}>
               {occPct}%
             </span>
-            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
-              <ArrowUpRight className="w-3 h-3" /> 6.2% vs yesterday
+            <span className={`flex items-center gap-0.5 font-bold ${is8Bit ? 'font-pixel text-[8px] text-[#047857]' : 'text-[10px] text-emerald-600'}`}>
+              <ArrowUpRight className="w-3 h-3" /> 6.2% vs yday
             </span>
           </div>
-          <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-            <path
-              d="M 0,22 Q 15,10 30,18 T 70,5"
-              fill="none"
-              stroke="#2563eb"
-              strokeWidth="2.5"
-            />
-            <circle cx="70" cy="5" r="3.5" fill="#2563eb" />
-          </svg>
+          {is8Bit ? (
+            <div className="w-14 h-7 flex items-end justify-between gap-1 pb-0.5 border-b-2 border-black bg-white">
+              <div className="w-2.5 bg-black" style={{ height: '40%' }} />
+              <div className="w-2.5 bg-[#4b5563]" style={{ height: '70%' }} />
+              <div className="w-2.5 bg-black" style={{ height: '90%' }} />
+            </div>
+          ) : (
+            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
+              <path
+                d="M 0,22 Q 15,10 30,18 T 70,5"
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth="2.5"
+              />
+              <circle cx="70" cy="5" r="3.5" fill="#2563eb" />
+            </svg>
+          )}
         </div>
 
         {/* 2. STAFF LOAD */}
-        <div className="p-2.5 neumorph-card flex items-center justify-between">
+        <div className={`p-2.5 flex items-center justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
           <div>
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide block">
+            <span className={`block uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
               STAFF LOAD
             </span>
-            <span className="text-xl sm:text-2xl font-black text-slate-900 my-0.5 block leading-none">
+            <span className={`my-0.5 block leading-none font-black ${is8Bit ? 'font-pixel text-lg sm:text-xl text-black' : 'text-xl sm:text-2xl text-slate-900'}`}>
               {staffLoad}%
             </span>
-            <span className="text-[10px] font-medium text-slate-600">
-              {staffAvailable} staff available
+            <span className={`block ${is8Bit ? 'font-pixel text-[8px] text-slate-600' : 'text-[10px] font-medium text-slate-600'}`}>
+              {staffAvailable} available
             </span>
           </div>
-          <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-            <path
-              d="M 0,10 Q 20,25 40,12 T 70,8"
-              fill="none"
-              stroke="#0284c7"
-              strokeWidth="2.5"
-            />
-            <circle cx="70" cy="8" r="3.5" fill="#0284c7" />
-          </svg>
+          {is8Bit ? (
+            <div className="w-14 h-7 flex items-end justify-between gap-1 pb-0.5 border-b-2 border-black bg-white">
+              <div className="w-2.5 bg-black" style={{ height: '55%' }} />
+              <div className="w-2.5 bg-[#4b5563]" style={{ height: '35%' }} />
+              <div className="w-2.5 bg-black" style={{ height: '74%' }} />
+            </div>
+          ) : (
+            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
+              <path
+                d="M 0,10 Q 20,25 40,12 T 70,8"
+                fill="none"
+                stroke="#0284c7"
+                strokeWidth="2.5"
+              />
+              <circle cx="70" cy="8" r="3.5" fill="#0284c7" />
+            </svg>
+          )}
         </div>
 
         {/* 3. GUEST WAIT */}
-        <div className="p-2.5 neumorph-card flex items-center justify-between">
+        <div className={`p-2.5 flex items-center justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
           <div>
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide block">
+            <span className={`block uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
               GUEST WAIT
             </span>
-            <span className="text-xl sm:text-2xl font-black text-slate-900 my-0.5 block leading-none">
+            <span className={`my-0.5 block leading-none font-black ${is8Bit ? 'font-pixel text-lg sm:text-xl text-black' : 'text-xl sm:text-2xl text-slate-900'}`}>
               {avgWaitMin} min
             </span>
-            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
+            <span className={`flex items-center gap-0.5 font-bold ${is8Bit ? 'font-pixel text-[8px] text-[#047857]' : 'text-[10px] text-emerald-600'}`}>
               <ArrowDownRight className="w-3 h-3" /> 3 min today
             </span>
           </div>
-          <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-            <path
-              d="M 0,8 Q 25,22 45,14 T 70,20"
-              fill="none"
-              stroke="#7c3aed"
-              strokeWidth="2.5"
-            />
-            <circle cx="70" cy="20" r="3.5" fill="#7c3aed" />
-          </svg>
+          {is8Bit ? (
+            <div className="w-14 h-7 flex items-end justify-between gap-1 pb-0.5 border-b-2 border-black bg-white">
+              <div className="w-2.5 bg-black" style={{ height: '80%' }} />
+              <div className="w-2.5 bg-[#4b5563]" style={{ height: '50%' }} />
+              <div className="w-2.5 bg-black" style={{ height: '30%' }} />
+            </div>
+          ) : (
+            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
+              <path
+                d="M 0,8 Q 25,22 45,14 T 70,20"
+                fill="none"
+                stroke="#7c3aed"
+                strokeWidth="2.5"
+              />
+              <circle cx="70" cy="20" r="3.5" fill="#7c3aed" />
+            </svg>
+          )}
         </div>
 
         {/* 4. TODAY'S REVENUE */}
-        <div className="p-2.5 neumorph-card flex items-center justify-between">
+        <div className={`p-2.5 flex items-center justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
           <div>
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide block">
+            <span className={`block uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
               TODAY&apos;S REVENUE
             </span>
-            <span className="text-xl sm:text-2xl font-black text-slate-900 my-0.5 block leading-none">
+            <span className={`my-0.5 block leading-none font-black ${is8Bit ? 'font-pixel text-lg sm:text-xl text-black' : 'text-xl sm:text-2xl text-slate-900'}`}>
               {formatRupees(revenueToday, true)}
             </span>
-            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
-              <ArrowUpRight className="w-3 h-3" /> 8.7% vs forecast
+            <span className={`flex items-center gap-0.5 font-bold ${is8Bit ? 'font-pixel text-[8px] text-[#047857]' : 'text-[10px] text-emerald-600'}`}>
+              <ArrowUpRight className="w-3 h-3" /> 8.7% vs fcst
             </span>
           </div>
-          <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-            <path
-              d="M 0,20 Q 20,15 45,8 T 70,4"
-              fill="none"
-              stroke="#2563eb"
-              strokeWidth="2.5"
-            />
-            <circle cx="70" cy="4" r="3.5" fill="#2563eb" />
-          </svg>
+          {is8Bit ? (
+            <div className="w-14 h-7 flex items-end justify-between gap-1 pb-0.5 border-b-2 border-black bg-white">
+              <div className="w-2.5 bg-black" style={{ height: '45%' }} />
+              <div className="w-2.5 bg-[#4b5563]" style={{ height: '70%' }} />
+              <div className="w-2.5 bg-black" style={{ height: '95%' }} />
+            </div>
+          ) : (
+            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
+              <path
+                d="M 0,20 Q 20,15 45,8 T 70,4"
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth="2.5"
+              />
+              <circle cx="70" cy="4" r="3.5" fill="#2563eb" />
+            </svg>
+          )}
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
           BOTTOM ROW: 4 Panels
-          1. Resort Stress Index (Circular Ring Gauge)
-          2. What-If Simulator
+          1. Resort Stress Index (Circular Ring Gauge or 8bitcn Health Bars)
+          2. What-If Simulator (With EASY/NORMAL/HARD Difficulty Pills in 8bitcn)
           3. Highest-Value Recommendation
-          4. 7-Day Stress Trend Line
+          4. 7-Day Stress Trend (Paired Pixel Bar Chart in 8bitcn style)
           ══════════════════════════════════════════════════════════════ */}
       <section className="shrink-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
         {/* PANEL 1: RESORT STRESS INDEX */}
-        <div className="p-2.5 neumorph-card flex flex-col justify-between">
+        <div className={`p-2.5 flex flex-col justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
           <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">
+            <span className={`uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
               RESORT STRESS INDEX
             </span>
-            <span className="px-2 py-0.2 rounded-full text-[8.5px] font-bold bg-amber-50 text-amber-700">
+            <span className={`px-2 py-0.2 rounded-full font-bold ${is8Bit ? 'border border-black font-pixel text-[8px] bg-white text-black' : 'text-[8.5px] bg-amber-50 text-amber-700'}`}>
               {stressLevel}
             </span>
           </div>
 
-          <div className="flex items-center justify-center my-0.5">
-            <div className="relative w-16 h-16 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#e2e8f0"
-                  strokeWidth="3.5"
-                />
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#2563eb"
-                  strokeWidth="3.5"
-                  strokeDasharray={`${currentStress}, 100`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute w-11 h-11 rounded-full neumorph-card flex flex-col items-center justify-center">
-                <span className="text-sm font-black text-slate-900 leading-none">
-                  {currentStress}
-                </span>
-                <span className="text-[7.5px] font-bold text-slate-500">/100</span>
+          {is8Bit ? (
+            /* 8bitcn Segmented Red Health Meters (Exact to Reference Image) */
+            <div className="space-y-2 my-1">
+              <div>
+                <div className="flex justify-between items-center text-[8px] font-pixel text-black mb-0.5">
+                  <span>Facility Health</span>
+                  <span>{100 - currentStress}%</span>
+                </div>
+                <div className="pixel-health-meter">
+                  <div
+                    className="pixel-health-segmented"
+                    style={{ width: `${Math.max(15, 100 - currentStress)}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between items-center text-[8px] font-pixel text-black mb-0.5">
+                  <span>System Stress</span>
+                  <span>{currentStress}%</span>
+                </div>
+                <div className="pixel-health-meter">
+                  <div
+                    className="pixel-health-segmented"
+                    style={{ width: `${currentStress}%` }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center justify-center my-0.5">
+              <div className="relative w-16 h-16 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#e2e8f0"
+                    strokeWidth="3.5"
+                  />
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#2563eb"
+                    strokeWidth="3.5"
+                    strokeDasharray={`${currentStress}, 100`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute w-11 h-11 rounded-full neumorph-card flex flex-col items-center justify-center">
+                  <span className="text-sm font-black text-slate-900 leading-none">
+                    {currentStress}
+                  </span>
+                  <span className="text-[7.5px] font-bold text-slate-500">/100</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-1 text-center text-[9px] pt-1 border-t border-slate-200/70">
             <div>
-              <span className="text-slate-500 block">Occupancy</span>
-              <span className="font-bold text-rose-600">High</span>
+              <span className={`block ${is8Bit ? 'font-pixel text-[7px] text-slate-600' : 'text-slate-500'}`}>Occupancy</span>
+              <span className={`font-bold ${is8Bit ? 'font-pixel text-[7px] text-black' : 'text-rose-600'}`}>High</span>
             </div>
             <div>
-              <span className="text-slate-500 block">Staff Load</span>
-              <span className="font-bold text-amber-600">Medium</span>
+              <span className={`block ${is8Bit ? 'font-pixel text-[7px] text-slate-600' : 'text-slate-500'}`}>Staff Load</span>
+              <span className={`font-bold ${is8Bit ? 'font-pixel text-[7px] text-black' : 'text-amber-600'}`}>Medium</span>
             </div>
             <div>
-              <span className="text-slate-500 block">Maint</span>
-              <span className="font-bold text-emerald-600">Low</span>
+              <span className={`block ${is8Bit ? 'font-pixel text-[7px] text-slate-600' : 'text-slate-500'}`}>Maint</span>
+              <span className={`font-bold ${is8Bit ? 'font-pixel text-[7px] text-black' : 'text-emerald-600'}`}>Low</span>
             </div>
           </div>
         </div>
 
         {/* PANEL 2: WHAT-IF SIMULATOR */}
-        <div id="what-if-card" className="p-2.5 neumorph-card flex flex-col justify-between">
+        <div id="what-if-card" className={`p-2.5 flex flex-col justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
           <div>
             <div className="flex items-center justify-between pb-1 border-b border-slate-200/70 mb-1">
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">
+              <span className={`uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
                 WHAT-IF SIMULATOR
               </span>
               <Sparkles className="w-3.5 h-3.5 text-blue-600" />
             </div>
 
+            {/* Select Difficulty Pills in 8bitcn Mode (Exact to Reference Image) */}
+            {is8Bit && (
+              <div className="grid grid-cols-3 gap-1 mb-1.5">
+                {[
+                  { label: 'EASY', scn: 'Low Season / 65% Occupancy' },
+                  { label: 'NORMAL', scn: '98% Occupancy — evening peak' },
+                  { label: 'HARD', scn: 'Sudden Monsoon Storm (3 PM)' },
+                ].map((d) => (
+                  <button
+                    key={d.label}
+                    onClick={() => {
+                      setSelectedScenario(d.scn)
+                      if (d.label === 'EASY') setSimulationResult('EASY MODE (65% Occ): Low load, 18 idle staff on standby.')
+                      if (d.label === 'NORMAL') setSimulationResult('NORMAL MODE (91% Occ): Evening peak dining & pool capacity.')
+                      if (d.label === 'HARD') setSimulationResult('HARD MODE (Monsoon Storm): High wind. Pool evacuated, dining surged.')
+                    }}
+                    className={`py-1 text-[7.5px] font-pixel uppercase rounded-full border border-black transition-all cursor-pointer ${
+                      selectedScenario === d.scn
+                        ? 'bg-black text-white shadow-[1px_1px_0px_#000]'
+                        : 'bg-white text-black hover:bg-slate-100'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <select
               value={selectedScenario}
               onChange={(e) => setSelectedScenario(e.target.value)}
-              className="w-full p-1 text-[11px] font-semibold rounded-xl bg-white border border-slate-200 text-slate-800 shadow-xs cursor-pointer mb-1"
+              className={`w-full p-1 text-[11px] font-semibold rounded-xl bg-white border border-slate-200 text-slate-800 shadow-xs cursor-pointer mb-1 ${is8Bit ? 'font-pixel text-[8px] border-2 border-black rounded-none shadow-[2px_2px_0px_#000]' : ''}`}
             >
               <option value="98% Occupancy — evening peak">98% Occupancy — evening peak</option>
               <option value="Sudden Monsoon Storm (3 PM)">Sudden Monsoon Storm (3 PM)</option>
@@ -1757,11 +1825,11 @@ export default function OwnerDashboardPage() {
             </select>
 
             {simulationResult ? (
-              <p className="text-[9.5px] font-medium text-blue-900 bg-blue-50/80 p-1 rounded-lg leading-tight line-clamp-2">
+              <p className={`p-1 rounded-lg leading-tight line-clamp-2 ${is8Bit ? 'font-pixel text-[8px] bg-slate-100 text-black border border-black' : 'text-[9.5px] font-medium text-blue-900 bg-blue-50/80'}`}>
                 {simulationResult}
               </p>
             ) : (
-              <p className="text-[9.5px] text-slate-500 leading-tight">
+              <p className={`leading-tight ${is8Bit ? 'font-pixel text-[8px] text-slate-500' : 'text-[9.5px] text-slate-500'}`}>
                 Simulate future demand spikes and staffing stress ahead of time.
               </p>
             )}
@@ -1770,43 +1838,51 @@ export default function OwnerDashboardPage() {
           <button
             onClick={handleRunSimulation}
             disabled={simulating}
-            className="w-full py-1 neumorph-btn-blue text-[11px] font-bold mt-1"
+            className={`w-full py-1 font-bold mt-1 cursor-pointer transition-transform active:translate-x-[2px] active:translate-y-[2px] ${
+              is8Bit
+                ? 'pixel-pill-black text-[8px] rounded-full'
+                : 'neumorph-btn-blue text-[11px]'
+            }`}
           >
             {simulating ? 'Simulating...' : 'Run Simulation →'}
           </button>
         </div>
 
         {/* PANEL 3: HIGHEST-VALUE RECOMMENDATION */}
-        <div className="p-2.5 neumorph-card flex flex-col justify-between">
+        <div className={`p-2.5 flex flex-col justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
           <div>
             <div className="flex items-center justify-between pb-1 border-b border-slate-200/70 mb-1">
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">
+              <span className={`uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
                 RECOMMENDATION
               </span>
-              <span className="px-1.5 py-0.2 rounded-full text-[8px] font-bold bg-amber-100 text-amber-800">
+              <span className={`px-1.5 py-0.2 rounded-full font-bold ${is8Bit ? 'border border-black font-pixel text-[8px] bg-white text-black' : 'text-[8px] bg-amber-100 text-amber-800'}`}>
                 PRIORITY
               </span>
             </div>
 
-            <h4 className="font-bold text-[11px] text-slate-900 leading-snug line-clamp-1 mb-0.5">
+            <h4 className={`font-bold leading-snug line-clamp-1 mb-0.5 ${is8Bit ? 'font-pixel text-[9px] text-black' : 'text-[11px] text-slate-900'}`}>
               {topRecommendation.title}
             </h4>
 
-            <p className="text-[9.5px] text-slate-600 leading-tight line-clamp-2">
+            <p className={`leading-tight line-clamp-2 ${is8Bit ? 'font-pixel text-[8px] text-slate-600' : 'text-[9.5px] text-slate-600'}`}>
               {topRecommendation.impactLine}
             </p>
           </div>
 
           <div>
             {approvedIds.has(topRecommendation.id) ? (
-              <div className="w-full py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold text-center flex items-center justify-center gap-1">
+              <div className={`w-full py-1 rounded-full text-center flex items-center justify-center gap-1 font-bold ${is8Bit ? 'border-2 border-black bg-black text-white font-pixel text-[8px]' : 'bg-emerald-100 text-emerald-800 text-[11px]'}`}>
                 <Check className="w-3.5 h-3.5" /> Applied
               </div>
             ) : (
               <button
                 onClick={handleApplyRecommendation}
                 disabled={applying}
-                className="w-full py-1 neumorph-btn-blue text-[11px] font-bold mt-1"
+                className={`w-full py-1 font-bold mt-1 cursor-pointer transition-transform active:translate-x-[2px] active:translate-y-[2px] ${
+                  is8Bit
+                    ? 'pixel-pill-black text-[8px] rounded-full'
+                    : 'neumorph-btn-blue text-[11px]'
+                }`}
               >
                 {applying ? 'Applying...' : 'Apply Recommendation →'}
               </button>
@@ -1814,46 +1890,68 @@ export default function OwnerDashboardPage() {
           </div>
         </div>
 
-        {/* PANEL 4: 7-DAY STRESS TREND LINE */}
-        <div className="p-2.5 neumorph-card flex flex-col justify-between">
+        {/* PANEL 4: 7-DAY STRESS TREND LINE (Paired Pixel Bar Chart in 8bitcn mode) */}
+        <div className={`p-2.5 flex flex-col justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
           <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">
+            <span className={`uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
               7-DAY STRESS TREND
             </span>
-            <span className="text-[11px] font-bold text-blue-600">
+            <span className={`font-bold ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[11px] text-blue-600'}`}>
               Current: {currentStress}
             </span>
           </div>
 
-          <div className="h-12 flex items-center justify-center py-0.5">
-            <svg className="w-full h-full overflow-visible" viewBox="0 0 160 60">
-              <defs>
-                <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2563eb" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#2563eb" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M 0,40 Q 25,20 50,38 T 100,25 T 160,18 L 160,60 L 0,60 Z"
-                fill="url(#trendGradient)"
-              />
-              <path
-                d="M 0,40 Q 25,20 50,38 T 100,25 T 160,18"
-                fill="none"
-                stroke="#2563eb"
-                strokeWidth="2.5"
-              />
-              <circle cx="0" cy="40" r="2.5" fill="#2563eb" />
-              <circle cx="26" cy="28" r="2.5" fill="#2563eb" />
-              <circle cx="52" cy="38" r="2.5" fill="#2563eb" />
-              <circle cx="78" cy="22" r="2.5" fill="#2563eb" />
-              <circle cx="104" cy="26" r="2.5" fill="#2563eb" />
-              <circle cx="130" cy="24" r="2.5" fill="#2563eb" />
-              <circle cx="160" cy="18" r="4" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
-            </svg>
-          </div>
+          {is8Bit ? (
+            /* Paired Pixel Bar Chart (Exact match to "Desktop vs Mobile visitors" in reference image) */
+            <div className="h-14 flex items-end justify-between gap-1 px-1 pt-1 pb-0.5 border-b-2 border-l-2 border-black bg-white my-0.5">
+              {[
+                { label: '09', black: 38, gray: 22 },
+                { label: '10', black: 82, gray: 58 },
+                { label: '11', black: 65, gray: 32 },
+                { label: '12', black: 25, gray: 48 },
+                { label: '13', black: 60, gray: 38 },
+                { label: '14', black: 64, gray: 44 },
+                { label: '15', black: 78, gray: 52 },
+              ].map((d, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center h-full justify-end">
+                  <div className="flex items-end gap-0.5 w-full justify-center h-full">
+                    <div style={{ height: `${d.black}%` }} className="w-1.5 sm:w-2 bg-black border-t border-l border-r border-black" />
+                    <div style={{ height: `${d.gray}%` }} className="w-1.5 sm:w-2 bg-[#4b5563] border-t border-l border-r border-black" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="h-12 flex items-center justify-center py-0.5">
+              <svg className="w-full h-full overflow-visible" viewBox="0 0 160 60">
+                <defs>
+                  <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#2563eb" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M 0,40 Q 25,20 50,38 T 100,25 T 160,18 L 160,60 L 0,60 Z"
+                  fill="url(#trendGradient)"
+                />
+                <path
+                  d="M 0,40 Q 25,20 50,38 T 100,25 T 160,18"
+                  fill="none"
+                  stroke="#2563eb"
+                  strokeWidth="2.5"
+                />
+                <circle cx="0" cy="40" r="2.5" fill="#2563eb" />
+                <circle cx="26" cy="28" r="2.5" fill="#2563eb" />
+                <circle cx="52" cy="38" r="2.5" fill="#2563eb" />
+                <circle cx="78" cy="22" r="2.5" fill="#2563eb" />
+                <circle cx="104" cy="26" r="2.5" fill="#2563eb" />
+                <circle cx="130" cy="24" r="2.5" fill="#2563eb" />
+                <circle cx="160" cy="18" r="4" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+              </svg>
+            </div>
+          )}
 
-          <div className="flex justify-between text-[8.5px] font-semibold text-slate-500 pt-0.5 border-t border-slate-200/70">
+          <div className={`flex justify-between pt-0.5 border-t border-slate-200/70 font-semibold ${is8Bit ? 'font-pixel text-[7px] text-black' : 'text-[8.5px] text-slate-500'}`}>
             <span>09 May</span>
             <span>11 May</span>
             <span>13 May</span>
@@ -1861,6 +1959,7 @@ export default function OwnerDashboardPage() {
           </div>
         </div>
       </section>
+
 
       {/* ══════════════════════════════════════════════════════════════
           CENTER MODAL: Automated Supply & Restock Order List
