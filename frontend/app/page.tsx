@@ -5,14 +5,8 @@ import AgentRail from '@/components/AgentRail'
 import CascadeFeed from '@/components/CascadeFeed'
 import ZoneHeatmap from '@/components/ZoneHeatmap'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/8bit/button'
-import { Badge } from '@/components/ui/8bit/badge'
-import { AlertTriangle, ShieldCheck, ArrowRight, Zap, RefreshCw } from 'lucide-react'
-
-const FloatingAgent3D = dynamic(() => import('@/components/FloatingAgent3D'), {
-  ssr: false,
-})
+import { AlertTriangle, ShieldCheck } from 'lucide-react'
 
 export default function CommandCentrePage() {
   return (
@@ -63,9 +57,6 @@ export default function CommandCentrePage() {
 
       {/* Live Autonomous Decision Cascade Stream */}
       <CascadeFeed />
-
-      {/* Interactive 3D Flying Robot Agent at Left Bottom */}
-      <FloatingAgent3D />
     </div>
   )
 }
