@@ -56,6 +56,24 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
+    # 2b. Restore a realistic occupied-room baseline on startup.
+    #     If ALL rooms are vacant (e.g. after a checkout-all), put 76 back to occupied
+    #     so both dashboards start with a realistic occupancy reading.
+    db = SessionLocal()
+    try:
+        from backend.models.resort import Room as _Room
+        occupied_count = db.query(_Room).filter(_Room.status == "occupied").count()
+        if occupied_count == 0:
+            rooms_list = db.query(_Room).all()
+            for idx, r in enumerate(rooms_list):
+                r.status = "occupied" if idx < 76 else "vacant_clean"
+            db.commit()
+            logger.info("Startup: restored 76 rooms to occupied (was fully vacant).")
+    except Exception:
+        logger.warning("Startup: room baseline restore failed.", exc_info=True)
+    finally:
+        db.close()
+
     # 3. Train ML models if needed
     artifacts_dir = os.path.join(os.path.dirname(__file__), "ml", "artifacts")
     os.makedirs(artifacts_dir, exist_ok=True)

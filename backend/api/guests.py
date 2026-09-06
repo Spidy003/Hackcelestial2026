@@ -252,10 +252,17 @@ async def create_personalized_booking(req: PersonalizedBookingRequest, db: Sessi
     except Exception:
         pass
 
-    # 5. Broadcast live patch
+    # 5. Broadcast live patch — include real-time occupancy KPI so ops dashboard updates immediately
     try:
+        from backend.models.resort import Room as RoomModel
+        total_rooms = db.query(RoomModel).count() or 84
+        occupied_rooms = db.query(RoomModel).filter(RoomModel.status == "occupied").count()
+        occupancy_pct = round((occupied_rooms / total_rooms * 100), 1)
+
         await manager.broadcast_patch(
             paths={
+                "kpis.occupied_rooms": occupied_rooms,
+                "kpis.occupancy_pct": occupancy_pct,
                 "latest_booking": booking.to_dict(),
                 "guest_profile": guest.to_dict(),
                 "restaurant_covers_update": {
