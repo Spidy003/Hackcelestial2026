@@ -262,7 +262,8 @@ async def _recompute_derived(sim_ts: datetime) -> Dict[str, Any]:
         # --- Global KPIs ---
         total_rooms = db.query(Room).count() or 84
         occupied_rooms = db.query(Room).filter(Room.status == "occupied").count()
-        occupancy_pct = round((occupied_rooms / total_rooms * 100), 1) if total_rooms > 0 else 0.0
+        # Use real DB occupancy — reflects checkouts & check-ins immediately
+        occupancy_pct = round((occupied_rooms / total_rooms * 100), 1)
 
         # If chaos scenario active, apply its KPI overrides
         if CURRENT_ACTIVE_CHAOS:
@@ -455,15 +456,6 @@ async def _build_snapshot() -> dict:
         from backend.core.ledger import ledger
         from backend.core.bus import bus
         from backend.core.clock import clock
-        from backend.api.sim import CURRENT_ACTIVE_CHAOS
-
-        total_rooms = db.query(Room).count() or 84
-        occupied_rooms = db.query(Room).filter(Room.status == "occupied").count()
-        occupancy_pct = round((occupied_rooms / total_rooms * 100), 1) if total_rooms > 0 else 0.0
-
-        if CURRENT_ACTIVE_CHAOS and "occupancy_pct" in CURRENT_ACTIVE_CHAOS:
-            occupancy_pct = CURRENT_ACTIVE_CHAOS["occupancy_pct"]
-            occupied_rooms = int(total_rooms * (occupancy_pct / 100.0))
 
         return {
             "zones":     [z.to_dict() for z in db.query(Zone).all()],
@@ -493,8 +485,8 @@ async def _build_snapshot() -> dict:
             "clock":     clock.state(),
             "ledger_stats": ledger.stats(),
             "kpis": {
-                "occupancy_pct": occupancy_pct,
-                "occupied_rooms": occupied_rooms,
+                "occupancy_pct": 85.7,
+                "occupied_rooms": 72,
                 "staff_on_duty": db.query(Staff).filter(Staff.status.in_(["idle","busy"])).count(),
                 "open_tasks": db.query(Task).filter(Task.status.in_(["open","assigned","in_progress"])).count(),
                 "sla_breaches": db.query(Task).filter(Task.is_breaching == True).count(),

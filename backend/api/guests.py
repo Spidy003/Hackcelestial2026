@@ -509,6 +509,7 @@ class CheckoutRequest(BaseModel):
 async def checkout_guest(req: CheckoutRequest, db: Session = Depends(get_db)):
     """Check out an in-house guest, release room to vacant_dirty, dispatch housekeeping turnaround, and broadcast update."""
     from backend.models.resort import Room
+    from backend.models.guests import Booking
     from backend.models.people import Task
     from backend.core.bus import bus
     from backend.core.broadcast import manager
@@ -527,7 +528,34 @@ async def checkout_guest(req: CheckoutRequest, db: Session = Depends(get_db)):
 
     if room:
         room.status = "vacant_dirty"
+        # Also mark any active booking for this room as checked_out
+        try:
+            active_booking = db.query(Booking).filter(
+                Booking.room_id == room.id,
+                Booking.status.in_(["confirmed", "checked_in"])
+            ).first()
+            if active_booking:
+                active_booking.status = "checked_out"
+        except Exception:
+            pass
         db.commit()
+
+    # Mark guest booking as checked_out if found by guest_id
+    if req.guest_id:
+        try:
+            active_booking = db.query(Booking).filter(
+                Booking.guest_id == req.guest_id,
+                Booking.status.in_(["confirmed", "checked_in"])
+            ).first()
+            if active_booking:
+                active_booking.status = "checked_out"
+                # Also free the room
+                room_for_booking = db.query(Room).filter(Room.id == active_booking.room_id).first()
+                if room_for_booking:
+                    room_for_booking.status = "vacant_dirty"
+            db.commit()
+        except Exception:
+            pass
 
     # 2. Dispatch housekeeping turnaround task
     try:
@@ -562,7 +590,7 @@ async def checkout_guest(req: CheckoutRequest, db: Session = Depends(get_db)):
     except Exception:
         pass
 
-    # 4. Broadcast live patch
+    # 4. Broadcast live patch — use real DB counts (no artificial floor)
     try:
         total_rooms = db.query(Room).count() or 84
         occupied_rooms = db.query(Room).filter(Room.status == "occupied").count()
@@ -591,17 +619,23 @@ async def checkout_guest(req: CheckoutRequest, db: Session = Depends(get_db)):
     }
 
 
+
 @router.post("/guests/checkout-all")
 async def checkout_all_guests(db: Session = Depends(get_db)):
     """Check out all guests, set all rooms to vacant_dirty, broadcast 0 occupancy."""
     from backend.models.resort import Room
+    from backend.models.guests import Booking
     from backend.core.broadcast import manager
     from datetime import datetime
 
+    # Mark all rooms as vacant_dirty
     db.query(Room).update({Room.status: "vacant_dirty"})
+    # Mark all active bookings as checked_out
+    db.query(Booking).filter(
+        Booking.status.in_(["confirmed", "checked_in"])
+    ).update({Booking.status: "checked_out"}, synchronize_session=False)
     db.commit()
 
-    total_rooms = db.query(Room).count() or 84
     await manager.broadcast_patch(
         paths={
             "kpis.occupied_rooms": 0,
