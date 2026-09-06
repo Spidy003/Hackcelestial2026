@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useResortStore, Zone } from '@/lib/store'
 import { formatRupees } from '@/lib/format'
@@ -11,10 +11,19 @@ import {
   ArrowUpRight, ArrowDownRight, Clock, FileText, 
   Check, X, Sparkles, Zap, Bell, ShieldAlert,
   Flame, Building2, Users, UserCheck, Package, ShoppingCart,
-  Plus, Minus, RefreshCw, Layers
+  Plus, Minus, RefreshCw, Layers, Eye, ArrowLeft
 } from 'lucide-react'
 import { useOwnerTheme } from '@/lib/owner-theme'
 import Retro8BitcnWidget from '@/components/Retro8BitcnWidget'
+
+const DIVE_START_FRAME = 15
+const DIVE_END_FRAME = 120
+const DIVE_TOTAL_FRAMES = DIVE_END_FRAME - DIVE_START_FRAME + 1 // 106 frames
+
+const DIVE_FRAME_PATHS = Array.from({ length: DIVE_TOTAL_FRAMES }, (_, i) => {
+  const num = String(DIVE_START_FRAME + i).padStart(3, '0')
+  return `/hotel-frames/ezgif-frame-${num}.jpg`
+})
 
 
 interface AlertItem {
@@ -185,13 +194,95 @@ export default function OwnerDashboardPage() {
     clock, kpis, zones, staff, tasks, 
     decisions, stress_index, stress_trend, weather 
   } = useResortStore()
-  const { theme, toggleTheme, is8Bit } = useOwnerTheme()
+  const { theme, toggleTheme, isCyberpunk } = useOwnerTheme()
 
   // Modal states for middle-of-screen popup
   const [activeModalAlert, setActiveModalAlert] = useState<AlertItem | null>(null)
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null)
   const [selectedPinDetails, setSelectedPinDetails] = useState<VisualPin | null>(null)
   const [showHotelAggregateModal, setShowHotelAggregateModal] = useState(false)
+  // ── In-Place 3D Hotel Dive inside Digital Twin Space ──
+  const [isHotelDiving, setIsHotelDiving] = useState(false)
+  const [currentDiveFrame, setCurrentDiveFrame] = useState(DIVE_START_FRAME)
+  const [diveCompleted, setDiveCompleted] = useState(false)
+  const diveCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const diveImagesRef = useRef<HTMLImageElement[]>([])
+
+  // Preload all 106 dive frames into memory for instantaneous response
+  useEffect(() => {
+    let mounted = true
+    const imgs: HTMLImageElement[] = []
+    DIVE_FRAME_PATHS.forEach((src, idx) => {
+      const img = new Image()
+      img.src = src
+      imgs[idx] = img
+    })
+    diveImagesRef.current = imgs
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  // In-place smooth dive animation inside Live Digital Twin container
+  useEffect(() => {
+    if (!isHotelDiving) return
+
+    setDiveCompleted(false)
+    let currentIdx = 0
+    let lastTime = performance.now()
+    const targetFps = 30
+    const frameInterval = 1000 / targetFps
+    let animId: number
+
+    const drawFrame = (frameIdx: number) => {
+      const canvas = diveCanvasRef.current
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      const img = diveImagesRef.current[frameIdx]
+      if (img && img.complete && img.naturalWidth > 0) {
+        if (canvas.width !== img.naturalWidth) {
+          canvas.width = img.naturalWidth
+          canvas.height = img.naturalHeight
+        }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      }
+    }
+
+    // Render frame 15 right away
+    drawFrame(0)
+    setCurrentDiveFrame(DIVE_START_FRAME)
+
+    const tick = (now: number) => {
+      const elapsed = now - lastTime
+
+      if (elapsed >= frameInterval) {
+        lastTime = now - (elapsed % frameInterval)
+        currentIdx++
+
+        if (currentIdx >= DIVE_TOTAL_FRAMES) {
+          // Reached frame 120: Stop smoothly
+          const finalIdx = DIVE_TOTAL_FRAMES - 1
+          drawFrame(finalIdx)
+          setCurrentDiveFrame(DIVE_END_FRAME)
+          setDiveCompleted(true)
+          return
+        }
+
+        drawFrame(currentIdx)
+        setCurrentDiveFrame(DIVE_START_FRAME + currentIdx)
+      }
+
+      animId = requestAnimationFrame(tick)
+    }
+
+    animId = requestAnimationFrame(tick)
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId)
+    }
+  }, [isHotelDiving])
   const [selectedScenario, setSelectedScenario] = useState('98% Occupancy — evening peak')
   const [simulationResult, setSimulationResult] = useState<string | null>(null)
   const [simulating, setSimulating] = useState(false)
@@ -517,13 +608,13 @@ export default function OwnerDashboardPage() {
   // ── 7. Aggregated Hotel Calculation ──
   const hotelAggregatedStats = useMemo(() => {
     const zoneWeights = [
-      { name: 'Villa Zone A (North Ocean)', load: 61, weight: 0.18, staff: 12 + (extraStaffBoost['villa-zone-a'] || 0), guests: 48, status: 'Busy', department: 'Housekeeping & Butler' },
-      { name: 'Villa Zone B (South Garden)', load: 35, weight: 0.14, staff: 8 + (extraStaffBoost['villa-zone-b'] || 0), guests: 26, status: 'Calm', department: 'Housekeeping' },
-      { name: 'Sagar / Mandwa Restaurant', load: 86, weight: 0.16, staff: 14 + (extraStaffBoost['sagar-restaurant'] || 0), guests: 64, status: 'High Demand', department: 'Food & Beverage' },
-      { name: 'Main Swimming Pool', load: 82, weight: 0.12, staff: 4 + (extraStaffBoost['swimming-pool'] || 0), guests: 38, status: 'Attention', department: 'Lifeguard & Maintenance' },
-      { name: 'Sunset Lounge Bar', load: 42, weight: 0.10, staff: 5 + (extraStaffBoost['sunset-lounge'] || 0), guests: 22, status: 'Calm', department: 'Beverage & Service' },
-      { name: 'Ananda Spa & Wellness', load: 18, weight: 0.08, staff: 6 + (extraStaffBoost['ananda-spa'] || 0), guests: 9, status: 'Calm', department: 'Therapists & Wellness' },
-      { name: 'Mahal Banquet & Lawns', load: 30, weight: 0.12, staff: 7 + (extraStaffBoost['mahal-banquet'] || 0), guests: 16, status: 'Calm', department: 'Events & Banqueting' },
+      { name: 'Villa Zone A (North Ocean)', load: 61, weight: 0.18, staff: 9 + (extraStaffBoost['villa-zone-a'] || 0), guests: 48, status: 'Busy', department: 'Housekeeping & Butler' },
+      { name: 'Villa Zone B (South Garden)', load: 35, weight: 0.14, staff: 5 + (extraStaffBoost['villa-zone-b'] || 0), guests: 26, status: 'Calm', department: 'Housekeeping' },
+      { name: 'Sagar / Mandwa Restaurant', load: 86, weight: 0.16, staff: 8 + (extraStaffBoost['sagar-restaurant'] || 0), guests: 64, status: 'High Demand', department: 'Food & Beverage' },
+      { name: 'Main Swimming Pool', load: 82, weight: 0.12, staff: 3 + (extraStaffBoost['swimming-pool'] || 0), guests: 38, status: 'Attention', department: 'Lifeguard & Maintenance' },
+      { name: 'Sunset Lounge Bar', load: 42, weight: 0.10, staff: 4 + (extraStaffBoost['sunset-lounge'] || 0), guests: 22, status: 'Calm', department: 'Beverage & Service' },
+      { name: 'Ananda Spa & Wellness', load: 18, weight: 0.08, staff: 4 + (extraStaffBoost['ananda-spa'] || 0), guests: 9, status: 'Calm', department: 'Therapists & Wellness' },
+      { name: 'Mahal Banquet & Lawns', load: 30, weight: 0.12, staff: 5 + (extraStaffBoost['mahal-banquet'] || 0), guests: 16, status: 'Calm', department: 'Events & Banqueting' },
       { name: 'Water Sports Jetty', load: 25, weight: 0.10, staff: 4 + (extraStaffBoost['water-sports-jetty'] || 0), guests: 12, status: 'Calm', department: 'Marine Operations' },
     ]
 
@@ -563,13 +654,13 @@ export default function OwnerDashboardPage() {
         department: 'Executive Operations & Central Front Desk',
         description: `Central Resort Complex • Aggregated live metrics across all 8 zones (${hotelAggregatedStats.occupiedRooms}/84 rooms occupied, ${hotelAggregatedStats.totalStaffCount} personnel on active duty).`,
         staffOnDuty: hotelAggregatedStats.totalStaffCount,
-        staffNeeded: 46,
+        staffNeeded: 42,
         activeRequests: 4,
       },
       {
         id: 'villa-zone-a',
         name: 'Villa Zone A',
-        subtitle: `${12 + (extraStaffBoost['villa-zone-a'] || 0)} Staff Working • 61% Load`,
+        subtitle: `${9 + (extraStaffBoost['villa-zone-a'] || 0)} Staff Working • 61% Load`,
         x: 34,
         y: 11,
         load: 61,
@@ -578,14 +669,14 @@ export default function OwnerDashboardPage() {
         isKeyHub: true,
         department: 'Housekeeping, Butler & Concierge',
         description: 'Luxury beachfront villas with private plunge pools. High guest service requests.',
-        staffOnDuty: 12 + (extraStaffBoost['villa-zone-a'] || 0),
-        staffNeeded: 14,
+        staffOnDuty: 9 + (extraStaffBoost['villa-zone-a'] || 0),
+        staffNeeded: 10,
         activeRequests: 3,
       },
       {
         id: 'sagar-restaurant',
         name: 'Sagar Restaurant',
-        subtitle: `${14 + (extraStaffBoost['sagar-restaurant'] || 0)} Staff Working • 86% Demand`,
+        subtitle: `${8 + (extraStaffBoost['sagar-restaurant'] || 0)} Staff Working • 86% Demand`,
         x: 23,
         y: 22,
         load: 86,
@@ -594,14 +685,14 @@ export default function OwnerDashboardPage() {
         isKeyHub: true,
         department: 'Food & Beverage Service & Kitchen',
         description: 'Multi-cuisine dining hall. Dinner tables at 86% capacity. Extra servers recommended.',
-        staffOnDuty: 14 + (extraStaffBoost['sagar-restaurant'] || 0),
-        staffNeeded: 16,
+        staffOnDuty: 8 + (extraStaffBoost['sagar-restaurant'] || 0),
+        staffNeeded: 10,
         activeRequests: 5,
       },
       {
         id: 'swimming-pool',
         name: 'Main Swimming Pool',
-        subtitle: `${4 + (extraStaffBoost['swimming-pool'] || 0)} Staff Working • 82% Risk`,
+        subtitle: `${3 + (extraStaffBoost['swimming-pool'] || 0)} Staff Working • 82% Risk`,
         x: 60,
         y: 44,
         load: 82,
@@ -610,14 +701,14 @@ export default function OwnerDashboardPage() {
         isKeyHub: true,
         department: 'Lifeguards & Facility Technicians',
         description: 'Coastal freshwater lagoon pool. Water circulation pump flow low. Service team notified.',
-        staffOnDuty: 4 + (extraStaffBoost['swimming-pool'] || 0),
-        staffNeeded: 5,
+        staffOnDuty: 3 + (extraStaffBoost['swimming-pool'] || 0),
+        staffNeeded: 4,
         activeRequests: 2,
       },
       {
         id: 'sunset-lounge',
         name: 'Sunset Lounge Bar',
-        subtitle: `${5 + (extraStaffBoost['sunset-lounge'] || 0)} Staff Working • 42% Load`,
+        subtitle: `${4 + (extraStaffBoost['sunset-lounge'] || 0)} Staff Working • 42% Load`,
         x: 58,
         y: 8,
         load: 42,
@@ -626,14 +717,14 @@ export default function OwnerDashboardPage() {
         isKeyHub: true,
         department: 'Mixology & Lounge Stewards',
         description: 'Open-air panoramic cocktail terrace facing the ocean. Ambient sunset seating.',
-        staffOnDuty: 5 + (extraStaffBoost['sunset-lounge'] || 0),
-        staffNeeded: 5,
+        staffOnDuty: 4 + (extraStaffBoost['sunset-lounge'] || 0),
+        staffNeeded: 4,
         activeRequests: 1,
       },
       {
         id: 'ananda-spa',
         name: 'Ananda Spa',
-        subtitle: `${6 + (extraStaffBoost['ananda-spa'] || 0)} Staff Working • 18% Load`,
+        subtitle: `${4 + (extraStaffBoost['ananda-spa'] || 0)} Staff Working • 18% Load`,
         x: 12,
         y: 34,
         load: 18,
@@ -642,14 +733,14 @@ export default function OwnerDashboardPage() {
         isKeyHub: true,
         department: 'Ayurvedic Therapists & Reception',
         description: 'Ayurvedic wellness pavilion and massage suites. Smooth operations.',
-        staffOnDuty: 6 + (extraStaffBoost['ananda-spa'] || 0),
-        staffNeeded: 6,
+        staffOnDuty: 4 + (extraStaffBoost['ananda-spa'] || 0),
+        staffNeeded: 4,
         activeRequests: 0,
       },
       {
         id: 'mahal-banquet',
         name: 'Mahal Banquet Hall',
-        subtitle: `${7 + (extraStaffBoost['mahal-banquet'] || 0)} Staff Working • 30% Load`,
+        subtitle: `${5 + (extraStaffBoost['mahal-banquet'] || 0)} Staff Working • 30% Load`,
         x: 80,
         y: 45,
         load: 30,
@@ -658,8 +749,8 @@ export default function OwnerDashboardPage() {
         isKeyHub: true,
         department: 'Banquet Stewards & Event Techs',
         description: 'Grand event pavilion and beachfront celebration lawns.',
-        staffOnDuty: 7 + (extraStaffBoost['mahal-banquet'] || 0),
-        staffNeeded: 7,
+        staffOnDuty: 5 + (extraStaffBoost['mahal-banquet'] || 0),
+        staffNeeded: 5,
         activeRequests: 1,
       },
       {
@@ -1244,44 +1335,44 @@ export default function OwnerDashboardPage() {
       {/* ══════════════════════════════════════════════════════════════
           TOP BAR: Greeting, Date/Time, Live Indicator, Weather, Alert Count & Restock Pill
           ══════════════════════════════════════════════════════════════ */}
-      <header className={`shrink-0 min-h-11 py-1.5 ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000] rounded-none' : 'neumorph-card'} px-3 sm:px-4 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap`}>
+      <header className={`shrink-0 min-h-11 py-1.5 ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_20px_rgba(198,255,0,0.06)]' : 'neumorph-card'} px-3 sm:px-4 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap`}>
         <div className="flex items-center gap-2.5">
-          <h1 className={`font-bold text-xs sm:text-sm tracking-tight ${is8Bit ? 'font-pixel text-[11px] text-black' : 'text-slate-900'}`}>
+          <h1 className={`font-bold text-xs sm:text-sm tracking-tight ${isCyberpunk ? 'font-cyber-display text-white' : 'text-slate-900'}`}>
             {greeting}
           </h1>
-          <span className={`hidden md:inline-block text-[11px] font-medium border-l pl-2.5 ${is8Bit ? 'border-black text-black font-pixel text-[9px]' : 'border-slate-300 text-slate-500'}`}>
+          <span className={`hidden md:inline-block text-[11px] font-medium border-l pl-2.5 ${isCyberpunk ? 'border-[#c6ff00]/30 text-[#8b9bb4] font-cyber text-[10px]' : 'border-slate-300 text-slate-500'}`}>
             Resort Operations Suite
           </span>
         </div>
 
         <div className="flex items-center gap-2 text-xs flex-wrap">
-          {/* 🕹️ Theme Switch Button (Switch between Executive UI and 8bitcn UI) */}
+          {/* Theme Switch Button */}
           <button
             onClick={toggleTheme}
-            className={`flex items-center gap-1.5 px-3 py-1 font-bold cursor-pointer transition-transform active:translate-x-[2px] active:translate-y-[2px] ${
-              is8Bit
-                ? 'pixel-pill-black text-[9px] rounded-full shadow-[2px_2px_0px_#000]'
+            className={`flex items-center gap-1.5 px-3 py-1 font-bold cursor-pointer transition-all ${
+              isCyberpunk
+                ? 'bg-[#c6ff00] text-black font-cyber-display text-[10px] font-black rounded-full shadow-[0_0_15px_rgba(198,255,0,0.4)] hover:bg-[#d8ff33]'
                 : 'rounded-full text-[11px] bg-slate-900 text-white hover:bg-black border border-slate-700 shadow-xs'
             }`}
-            title="Switch between Executive UI and 8bitcn Retro UI"
+            title="Switch between Dark Theme and Executive UI"
           >
-            {is8Bit ? (
+            {isCyberpunk ? (
               <>
-                <Layers className="w-3 h-3 text-emerald-400" />
-                <span className="font-pixel text-[9px]">👔 EXECUTIVE UI</span>
+                <span className="text-black font-bold">🌙</span>
+                <span>DARK THEME</span>
               </>
             ) : (
               <>
-                <span className="animate-pulse">🕹️</span>
-                <span className="font-pixel text-[9px] text-[#00ff66]">8BITCN UI</span>
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                <span>👔 EXECUTIVE VIEW</span>
               </>
             )}
           </button>
 
           {/* Live Indicator */}
-          <div className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold shadow-xs ${is8Bit ? 'bg-black text-white border border-black font-pixel text-[8px]' : 'bg-emerald-50 text-emerald-700'}`}>
-            <span className={`w-2 h-2 rounded-full ${is8Bit ? 'bg-[#00ff66]' : 'bg-emerald-500 animate-ping'}`} />
-            <span className="text-[10px] tracking-wide">LIVE</span>
+          <div className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold shadow-xs ${isCyberpunk ? 'bg-[#090d14] text-[#c6ff00] border border-[#c6ff00]/40 font-cyber text-[9px] shadow-[0_0_8px_rgba(198,255,0,0.25)]' : 'bg-emerald-50 text-emerald-700'}`}>
+            <span className={`w-2 h-2 rounded-full ${isCyberpunk ? 'bg-[#c6ff00] shadow-[0_0_6px_#c6ff00] animate-pulse' : 'bg-emerald-500 animate-ping'}`} />
+            <span className="text-[10px] tracking-wide font-bold">LIVE</span>
           </div>
 
           {/* Automated Inventory Restock Quick Action Pill */}
@@ -1291,8 +1382,8 @@ export default function OwnerDashboardPage() {
               setShowInventoryModal(true)
             }}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold shadow-xs transition-colors cursor-pointer text-[11px] border ${
-              is8Bit
-                ? 'bg-white text-black border-2 border-black font-pixel text-[9px] shadow-[2px_2px_0px_#000]'
+              isCyberpunk
+                ? 'bg-[#121822] text-[#c6ff00] border-[#c6ff00]/40 font-cyber text-[10px] hover:bg-[#c6ff00] hover:text-black hover:shadow-[0_0_15px_rgba(198,255,0,0.4)]'
                 : pendingRestockCount === 0
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-300/80 hover:bg-emerald-100'
                 : 'bg-blue-50 text-blue-800 border-blue-200/60 hover:bg-blue-100'
@@ -1301,12 +1392,12 @@ export default function OwnerDashboardPage() {
           >
             {pendingRestockCount === 0 ? (
               <>
-                <CheckCircle2 className={`w-3.5 h-3.5 ${is8Bit ? 'text-black' : 'text-emerald-600'}`} />
+                <CheckCircle2 className={`w-3.5 h-3.5 ${isCyberpunk ? 'text-[#c6ff00]' : 'text-emerald-600'}`} />
                 <span>All Par Levels Secured</span>
               </>
             ) : (
               <>
-                <Package className={`w-3.5 h-3.5 ${is8Bit ? 'text-black' : 'text-blue-600'}`} />
+                <Package className={`w-3.5 h-3.5 ${isCyberpunk ? 'text-[#c6ff00]' : 'text-blue-600'}`} />
                 <span>Restock Orders ({pendingRestockCount})</span>
                 <span className="hidden sm:inline font-normal">• {formatRupees(totalRestockCost, true)}</span>
               </>
@@ -1314,27 +1405,27 @@ export default function OwnerDashboardPage() {
           </button>
 
           {/* Weather Chip */}
-          <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shadow-xs font-medium text-[11px] ${is8Bit ? 'bg-white text-black border-2 border-black font-pixel text-[9px]' : 'bg-white text-slate-700'}`}>
+          <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shadow-xs font-medium text-[11px] ${isCyberpunk ? 'bg-[#101622] text-slate-200 border border-[#c6ff00]/25 font-cyber text-[10px]' : 'bg-white text-slate-700'}`}>
             {weather?.condition === 'Rainy' ? (
-              <CloudRain className={`w-3.5 h-3.5 ${is8Bit ? 'text-black' : 'text-blue-600'}`} />
+              <CloudRain className={`w-3.5 h-3.5 ${isCyberpunk ? 'text-[#00f5d4]' : 'text-blue-600'}`} />
             ) : (
-              <CloudSun className={`w-3.5 h-3.5 ${is8Bit ? 'text-black' : 'text-amber-500'}`} />
+              <CloudSun className={`w-3.5 h-3.5 ${isCyberpunk ? 'text-[#c6ff00]' : 'text-amber-500'}`} />
             )}
             <span>{weather?.temp || 28}°C {weather?.condition || 'Clear Ocean'}</span>
           </div>
 
           {/* Simulated Date & Time */}
-          <div suppressHydrationWarning className={`hidden sm:flex items-center px-2.5 py-0.5 rounded-full shadow-xs font-medium text-[11px] ${is8Bit ? 'bg-white text-black border-2 border-black font-pixel text-[8px]' : 'bg-white text-slate-700'}`}>
+          <div suppressHydrationWarning className={`hidden sm:flex items-center px-2.5 py-0.5 rounded-full shadow-xs font-medium text-[11px] ${isCyberpunk ? 'bg-[#101622] text-[#c6ff00] border border-[#c6ff00]/25 font-mono text-[10px]' : 'bg-white text-slate-700'}`}>
             {simDate.formatted}
           </div>
 
           {/* Alert Count Pill */}
           <button
             onClick={() => alertItems.length > 0 && setActiveModalAlert(alertItems[0])}
-            className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold shadow-xs cursor-pointer text-[11px] ${is8Bit ? 'bg-white text-rose-700 border-2 border-black font-pixel text-[8px]' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}
+            className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold shadow-xs cursor-pointer text-[11px] ${isCyberpunk ? 'bg-[#1f0f15] text-[#ff3366] border border-[#ff3366]/40 font-cyber text-[10px] hover:shadow-[0_0_12px_rgba(255,51,102,0.4)]' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}
             title="Click to view urgent alert"
           >
-            <Bell className="w-3.5 h-3.5 text-rose-600" />
+            <Bell className="w-3.5 h-3.5 text-rose-500" />
             <span>{alertItems.length} Alerts</span>
           </button>
         </div>
@@ -1348,21 +1439,28 @@ export default function OwnerDashboardPage() {
           ══════════════════════════════════════════════════════════════ */}
       <section className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-2.5">
         {/* HERO: Live Digital Twin Aerial Photo with Pinpoint Markers */}
-        <div className="lg:col-span-8 neumorph-card p-2.5 flex flex-col justify-between min-h-0 overflow-hidden">
+        <div className={`lg:col-span-8 neumorph-card p-2.5 flex flex-col justify-between min-h-0 overflow-hidden ${isCyberpunk ? 'cut-corner-hero bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_20px_rgba(198,255,0,0.06)]' : ''}`}>
           <div className="flex items-center justify-between pb-1.5 border-b border-slate-200/70 shrink-0">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold tracking-wide">
+              {isCyberpunk && (
+                <div className="flex items-center gap-1 mr-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#c6ff00] shadow-[0_0_6px_#c6ff00]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#c6ff00]/60" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#c6ff00]/30" />
+                </div>
+              )}
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide ${isCyberpunk ? 'bg-[#141b25] text-[#c6ff00] border border-[#c6ff00]/40 font-cyber' : 'bg-blue-50 text-blue-700'}`}>
                 LIVE DIGITAL TWIN
               </span>
-              <h2 className="font-bold text-xs sm:text-sm text-slate-900">
+              <h2 className={`font-bold text-xs sm:text-sm ${isCyberpunk ? 'font-cyber-display !text-white' : 'text-slate-900'}`}>
                 Ocean Bliss Aerial Map • Real-Time Spatial Points
               </h2>
 
               {/* Real-time Personnel Badge */}
-              <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50/80 text-blue-800 text-[10px] font-bold border border-blue-200/60">
-                <Users className="w-3 h-3 text-blue-600 animate-pulse" />
+              <div className={`hidden xl:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isCyberpunk ? 'bg-[#101622] text-[#c6ff00] border-[#c6ff00]/40 font-cyber' : 'bg-blue-50/80 text-blue-800 border-blue-200/60'}`}>
+                <Users className="w-3 h-3 text-[#c6ff00] animate-pulse" />
                 <span>{hotelAggregatedStats.totalStaffCount} Staff Active in Real Time</span>
-                <span className="text-blue-500 font-normal">({staffAvailable} on standby)</span>
+                <span className={isCyberpunk ? 'text-slate-400 font-normal' : 'text-blue-500 font-normal'}>({staffAvailable} on standby)</span>
               </div>
             </div>
 
@@ -1374,17 +1472,25 @@ export default function OwnerDashboardPage() {
                   setOrderSubmitted(false)
                   setShowInventoryModal(true)
                 }}
-                className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-1 shadow-xs"
+                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer ${
+                  isCyberpunk
+                    ? 'bg-[#121822] text-[#c6ff00] border border-[#c6ff00]/40 hover:bg-[#c6ff00] hover:text-black font-cyber'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                }`}
                 title="View Automated Restock List"
               >
-                <Package className="w-2.5 h-2.5 text-blue-600" />
+                <Package className={`w-2.5 h-2.5 ${isCyberpunk ? 'text-[#c6ff00]' : 'text-blue-600'}`} />
                 <span>Restock List</span>
               </button>
 
               <button
                 onClick={() => setShowStaffOverlay(!showStaffOverlay)}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 border ${
-                  showStaffOverlay 
+                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 border cursor-pointer ${
+                  isCyberpunk 
+                    ? showStaffOverlay
+                      ? 'bg-[#c6ff00] text-black border-[#c6ff00] font-cyber shadow-[0_0_10px_rgba(198,255,0,0.4)]'
+                      : 'bg-[#121822] text-slate-300 border-[#c6ff00]/30 font-cyber'
+                    : showStaffOverlay 
                     ? 'bg-blue-600 text-white border-blue-600 shadow-xs' 
                     : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                 }`}
@@ -1394,159 +1500,195 @@ export default function OwnerDashboardPage() {
                 <span>Staff {showStaffOverlay ? 'ON' : 'OFF'}</span>
               </button>
 
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-[10px] font-semibold text-slate-600">
+              <div className={`flex items-center p-0.5 rounded-lg text-[10px] font-semibold ${
+                isCyberpunk 
+                  ? 'bg-[#090d14] border border-[#c6ff00]/30 text-slate-300 font-cyber' 
+                  : 'bg-slate-100 text-slate-600'
+              }`}>
                 <button
                   onClick={() => setPinFilter('key')}
-                  className={`px-2 py-0.5 rounded-md transition-all ${
-                    pinFilter === 'key' ? 'bg-white text-blue-700 shadow-xs font-bold' : 'hover:text-slate-900'
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                    pinFilter === 'key' 
+                      ? isCyberpunk ? 'bg-[#c6ff00] text-black font-bold shadow-[0_0_8px_rgba(198,255,0,0.4)]' : 'bg-white text-blue-700 shadow-xs font-bold' 
+                      : isCyberpunk ? 'text-slate-400 hover:text-white' : 'hover:text-slate-900'
                   }`}
                 >
                   Key Hubs
                 </button>
                 <button
                   onClick={() => setPinFilter('all')}
-                  className={`px-2 py-0.5 rounded-md transition-all ${
-                    pinFilter === 'all' ? 'bg-white text-blue-700 shadow-xs font-bold' : 'hover:text-slate-900'
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                    pinFilter === 'all' 
+                      ? isCyberpunk ? 'bg-[#c6ff00] text-black font-bold shadow-[0_0_8px_rgba(198,255,0,0.4)]' : 'bg-white text-blue-700 shadow-xs font-bold' 
+                      : isCyberpunk ? 'text-slate-400 hover:text-white' : 'hover:text-slate-900'
                   }`}
                 >
                   All Points ({visualPins.length})
                 </button>
               </div>
 
-              <div className="hidden sm:flex items-center gap-2.5 text-[10px] font-semibold text-slate-600 pl-1 border-l border-slate-200">
+              <div className={`hidden sm:flex items-center gap-2.5 text-[10px] font-semibold pl-1 border-l ${isCyberpunk ? 'border-[#c6ff00]/30 text-slate-300 font-cyber' : 'border-slate-200 text-slate-600'}`}>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> Calm
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_4px_#10b981]" /> Calm
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" /> Busy
+                  <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_4px_#f59e0b]" /> Busy
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" /> Attention
+                  <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_4px_#f43f5e]" /> Attention
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Aerial Map Container with Visual Pins */}
+          {/* Aerial Map Container with Visual Pins OR In-Place 3D Hotel Dive */}
           <div className="relative flex-1 min-h-0 w-full neumorph-inset p-1 rounded-2xl overflow-hidden group">
             <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-900 select-none">
-              {/* Actual Drone Aerial Photograph */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/resort-aerial.jpg"
-                alt="Live Digital Twin Aerial Drone Map"
-                className="w-full h-full object-cover object-center pointer-events-none"
-              />
+              
+              {!isHotelDiving ? (
+                <>
+                  {/* Actual Drone Aerial Photograph */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/resort-aerial.jpg"
+                    alt="Live Digital Twin Aerial Drone Map"
+                    className="w-full h-full object-cover object-center pointer-events-none"
+                  />
 
-              {/* Ocean Tag on the right beach shore */}
-              <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/70 backdrop-blur-xs border border-sky-400/30 text-[10px] font-bold text-sky-200 flex items-center gap-1.5 shadow-md pointer-events-none">
-                <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-                <span>Ocean Space & Beachfront</span>
-              </div>
-
-              {/* Visual Pins Overlay with Real-Time Staff Counts */}
-              {displayedPins.map((pin) => {
-                const isHotel = pin.isHotel
-                const isStretched = pin.statusType === 'stretched'
-                const isBusy = pin.statusType === 'busy'
-
-                return (
-                  <div
-                    key={pin.id}
-                    onClick={() => {
-                      if (isHotel) {
-                        setShowHotelAggregateModal(true)
-                      } else {
-                        setSelectedPinDetails(pin)
-                        setSelectedZone({
-                          id: Number(pin.id) || 10,
-                          name: pin.name,
-                          workload_index: pin.load,
-                          staff_on_duty: pin.staffOnDuty,
-                          staff_required_now: pin.staffNeeded,
-                          backlog_count: pin.activeRequests,
-                        } as Zone)
-                      }
-                    }}
-                    style={{
-                      left: `${pin.x}%`,
-                      top: `${pin.y}%`,
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                    className={`absolute z-20 cursor-pointer transition-all duration-200 hover:scale-110 hover:z-30 group/pin`}
-                  >
-                    {/* Hotel Special Pill vs Regular Zone Pill */}
-                    {isHotel ? (
-                      <div className="flex flex-col items-center">
-                        <div className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-blue-900/95 via-indigo-900/95 to-blue-950/95 text-white border-2 border-amber-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.6)] backdrop-blur-md flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-amber-400 text-slate-900 flex items-center justify-center font-black text-[9px] shadow-sm">
-                            ★
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5 leading-none">
-                              <span className="font-extrabold text-[11px] tracking-tight text-amber-200">
-                                {pin.name}
-                              </span>
-                              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/90 text-white text-[8px] font-bold">
-                                {hotelAggregatedStats.calculatedLoad}% LOAD
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[8.5px] font-bold text-sky-200 flex items-center gap-1">
-                                <Users className="w-2.5 h-2.5 text-sky-300" /> {hotelAggregatedStats.totalStaffCount} Staff Working
-                              </span>
-                              <span className="text-[8px] text-slate-300">
-                                • {hotelAggregatedStats.occupiedRooms}/84 Keys
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        {/* Downward Pointer Triangle */}
-                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-amber-400 drop-shadow-sm" />
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <div className={`px-2 py-1 rounded-lg backdrop-blur-md border shadow-[0_3px_10px_rgba(0,0,0,0.45)] flex items-center gap-1.5 transition-colors ${
-                          isStretched 
-                            ? 'bg-rose-950/90 border-rose-400/80 text-white' 
-                            : isBusy 
-                            ? 'bg-amber-950/90 border-amber-400/80 text-white' 
-                            : 'bg-slate-900/85 border-white/30 text-white'
-                        }`}>
-                          <span className={`w-2 h-2 rounded-full shrink-0 ${
-                            isStretched 
-                              ? 'bg-rose-500 animate-ping' 
-                              : isBusy 
-                              ? 'bg-amber-400' 
-                              : 'bg-emerald-400'
-                          }`} />
-
-                          <div className="leading-tight">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-[10px] whitespace-nowrap">
-                                {pin.name}
-                              </span>
-                              {showStaffOverlay && (
-                                <span className="px-1 py-0.2 rounded bg-blue-500/30 text-sky-200 text-[8px] font-bold flex items-center gap-0.5">
-                                  <Users className="w-2 h-2" /> {pin.staffOnDuty}
-                                </span>
-                              )}
-                            </div>
-                            <span className={`text-[8.5px] font-medium block whitespace-nowrap mt-0.5 ${
-                              isStretched ? 'text-rose-200' : isBusy ? 'text-amber-200' : 'text-slate-300'
-                            }`}>
-                              {pin.staffOnDuty} Staff Working • {pin.load}% Load
-                            </span>
-                          </div>
-                        </div>
-                        <div className={`w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] ${
-                          isStretched ? 'border-t-rose-500' : isBusy ? 'border-t-amber-400' : 'border-t-slate-800'
-                        }`} />
-                      </div>
-                    )}
+                  {/* Ocean Tag on the right beach shore */}
+                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/70 backdrop-blur-xs border border-sky-400/30 text-[10px] font-bold text-sky-200 flex items-center gap-1.5 shadow-md pointer-events-none">
+                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                    <span>Ocean Space & Beachfront</span>
                   </div>
-                )
-              })}
+
+                  {/* Visual Pins Overlay with Real-Time Staff Counts */}
+                  {displayedPins.map((pin) => {
+                    const isHotel = pin.isHotel
+                    const isStretched = pin.statusType === 'stretched'
+                    const isBusy = pin.statusType === 'busy'
+
+                    return (
+                      <div
+                        key={pin.id}
+                        onClick={() => {
+                          if (isHotel) {
+                            setIsHotelDiving(true)
+                          } else {
+                            setSelectedPinDetails(pin)
+                            setSelectedZone({
+                              id: Number(pin.id) || 10,
+                              name: pin.name,
+                              workload_index: pin.load,
+                              staff_on_duty: pin.staffOnDuty,
+                              staff_required_now: pin.staffNeeded,
+                              backlog_count: pin.activeRequests,
+                            } as Zone)
+                          }
+                        }}
+                        style={{
+                          left: `${pin.x}%`,
+                          top: `${pin.y}%`,
+                          transform: 'translate(-50%, -50%)',
+                        }}
+                        className={`absolute z-20 cursor-pointer transition-all duration-200 hover:scale-110 hover:z-30 group/pin`}
+                      >
+                        {/* Hotel Special Pill vs Regular Zone Pill */}
+                        {isHotel ? (
+                          <div className="flex flex-col items-center">
+                            <div className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-blue-900/95 via-indigo-900/95 to-blue-950/95 text-white border-2 border-amber-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.6)] backdrop-blur-md flex items-center gap-2">
+                              <div className="w-4 h-4 rounded-full bg-amber-400 text-slate-900 flex items-center justify-center font-black text-[9px] shadow-sm">
+                                ★
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-1.5 leading-none">
+                                  <span className="font-extrabold text-[11px] tracking-tight text-amber-200">
+                                    {pin.name}
+                                  </span>
+                                  <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/90 text-white text-[8px] font-bold">
+                                    {hotelAggregatedStats.calculatedLoad}% LOAD
+                                  </span>
+                                  <span className="px-1.5 py-0.2 rounded-full bg-amber-400/25 text-amber-300 text-[8px] font-extrabold border border-amber-400/40 flex items-center gap-0.5 animate-pulse">
+                                    <Eye className="w-2.5 h-2.5" /> DIVE IN
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[8.5px] font-bold text-sky-200 flex items-center gap-1">
+                                    <Users className="w-2.5 h-2.5 text-sky-300" /> {hotelAggregatedStats.totalStaffCount} Staff Working
+                                  </span>
+                                  <span className="text-[8px] text-slate-300">
+                                    • {hotelAggregatedStats.occupiedRooms}/84 Keys
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            {/* Downward Pointer Triangle */}
+                            <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-amber-400 drop-shadow-sm" />
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center">
+                            <div className={`px-2 py-1 rounded-lg backdrop-blur-md border shadow-[0_3px_10px_rgba(0,0,0,0.45)] flex items-center gap-1.5 transition-colors ${
+                              isStretched 
+                                ? 'bg-rose-950/90 border-rose-400/80 text-white' 
+                                : isBusy 
+                                ? 'bg-amber-950/90 border-amber-400/80 text-white' 
+                                : 'bg-slate-900/85 border-white/30 text-white'
+                            }`}>
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                isStretched 
+                                  ? 'bg-rose-500 animate-ping' 
+                                  : isBusy 
+                                  ? 'bg-amber-400' 
+                                  : 'bg-emerald-400'
+                              }`} />
+
+                              <div className="leading-tight">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-[10px] whitespace-nowrap">
+                                    {pin.name}
+                                  </span>
+                                  {showStaffOverlay && (
+                                    <span className="px-1 py-0.2 rounded bg-blue-500/30 text-sky-200 text-[8px] font-bold flex items-center gap-0.5">
+                                      <Users className="w-2 h-2" /> {pin.staffOnDuty}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className={`text-[8.5px] font-medium block whitespace-nowrap mt-0.5 ${
+                                  isStretched ? 'text-rose-200' : isBusy ? 'text-amber-200' : 'text-slate-300'
+                                }`}>
+                                  {pin.staffOnDuty} Staff Working • {pin.load}% Load
+                                </span>
+                              </div>
+                            </div>
+                            <div className={`w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] ${
+                              isStretched ? 'border-t-rose-500' : isBusy ? 'border-t-amber-400' : 'border-t-slate-800'
+                            }`} />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </>
+              ) : (
+                /* IN-PLACE 3D HOTEL DIVE: Exact same size, space and position as live digital twin */
+                <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
+                  <canvas
+                    ref={diveCanvasRef}
+                    className="w-full h-full object-cover object-center"
+                  />
+
+                  {/* ONLY KEEP: Return to Aerial Map button */}
+                  <div className="absolute top-3 right-3 pointer-events-auto z-30">
+                    <button
+                      onClick={() => setIsHotelDiving(false)}
+                      className="px-3.5 py-1.5 rounded-full bg-slate-950/85 hover:bg-slate-900 text-white border border-white/20 backdrop-blur-md text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg hover:scale-105"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Return to Aerial Map</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
 
@@ -1556,21 +1698,27 @@ export default function OwnerDashboardPage() {
               <span>Real-Time Staffing: <strong>{hotelAggregatedStats.totalStaffCount} on duty</strong> across 8 facilities • <strong>{staffAvailable} standby</strong>.</span>
             </span>
             <span className="font-semibold text-blue-600">
-              Villa Zone A: {12 + (extraStaffBoost['villa-zone-a'] || 0)} Staff Working (61% Load)
+              Villa Zone A: {9 + (extraStaffBoost['villa-zone-a'] || 0)} Staff Working (61% Load)
             </span>
           </div>
         </div>
 
         {/* RIGHT COLUMN: Resort Alerts (Click opens modal in middle) */}
-        <div className="lg:col-span-4 neumorph-card p-2.5 flex flex-col justify-between min-h-0 overflow-hidden">
+        <div className={`lg:col-span-4 neumorph-card p-2.5 flex flex-col justify-between min-h-0 overflow-hidden ${isCyberpunk ? 'cut-corner-hero bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_20px_rgba(198,255,0,0.06)]' : ''}`}>
           <div className="flex items-center justify-between pb-1.5 border-b border-slate-200/70 shrink-0">
             <div className="flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              <h3 className="font-bold text-xs sm:text-sm text-slate-900">
+              {isCyberpunk && (
+                <div className="flex items-center gap-1 mr-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#c6ff00] shadow-[0_0_6px_#c6ff00]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#c6ff00]/60" />
+                </div>
+              )}
+              <AlertTriangle className={`w-4 h-4 ${isCyberpunk ? 'text-[#c6ff00]' : 'text-amber-500'}`} />
+              <h3 className={`font-bold text-xs sm:text-sm ${isCyberpunk ? 'font-cyber-display text-white' : 'text-slate-900'}`}>
                 Resort Alerts
               </h3>
             </div>
-            <span className="text-[10px] text-slate-500 font-medium">
+            <span className={`text-[10px] font-medium ${isCyberpunk ? 'text-slate-400 font-cyber' : 'text-slate-500'}`}>
               Newest first
             </span>
           </div>
@@ -1646,17 +1794,17 @@ export default function OwnerDashboardPage() {
       {/* Active Chaos Notification Banner */}
       {activeChaos && (
         <div className={`p-2.5 flex items-center justify-between gap-3 border-2 ${
-          is8Bit 
-            ? 'bg-[#1a0a0a] border-[#ff0055] text-white shadow-[4px_4px_0px_#000]' 
+          isCyberpunk 
+            ? 'bg-[#140a0f] border-[#ff0055] text-white shadow-[0_0_20px_rgba(255,0,85,0.25)] rounded-xl' 
             : 'bg-gradient-to-r from-amber-50 to-rose-50 border-rose-300 text-rose-900 rounded-xl shadow-sm'
         }`}>
           <div className="flex items-center gap-2">
             <span className="text-base animate-bounce">⚡</span>
             <div>
-              <span className={`block uppercase font-bold tracking-wider ${is8Bit ? 'font-pixel text-[8px] text-[#ff0055]' : 'text-[11px] text-rose-700'}`}>
+              <span className={`block uppercase font-bold tracking-wider ${isCyberpunk ? 'font-cyber-display text-[9px] text-[#ff0055]' : 'text-[11px] text-rose-700'}`}>
                 LIVE CHAOS TEST INJECTED:
               </span>
-              <span className={`font-black ${is8Bit ? 'font-pixel text-xs text-white' : 'text-xs text-rose-950 font-bold'}`}>
+              <span className={`font-black ${isCyberpunk ? 'font-cyber text-xs text-white' : 'text-xs text-rose-950 font-bold'}`}>
                 {activeChaos.title || activeChaos.scenarioId}
               </span>
             </div>
@@ -1671,8 +1819,8 @@ export default function OwnerDashboardPage() {
               } catch {}
             }}
             className={`px-3 py-1.5 uppercase font-bold text-xs transition-all ${
-              is8Bit
-                ? 'font-pixel text-[8px] bg-[#ff0055] text-black border-2 border-black hover:bg-white'
+              isCyberpunk
+                ? 'font-cyber-display text-[9px] bg-[#ff0055] text-white rounded-lg hover:bg-rose-600 shadow-[0_0_15px_rgba(255,0,85,0.4)]'
                 : 'bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm text-[11px]'
             }`}
           >
@@ -1686,24 +1834,29 @@ export default function OwnerDashboardPage() {
           ══════════════════════════════════════════════════════════════ */}
       <section className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-2">
         {/* 1. OCCUPANCY */}
-        <div className={`p-2.5 flex items-center justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
+        <div className={`p-3 flex items-center justify-between transition-all ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)] hover:border-[#c6ff00]' : 'neumorph-card'}`}>
           <div>
-            <span className={`block uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
+            <span className={`block uppercase tracking-wider font-bold ${isCyberpunk ? 'font-cyber-display text-[9px] text-[#cbd5e1]' : 'text-[9px] font-bold text-slate-500'}`}>
               OCCUPANCY
             </span>
-            <span className={`my-0.5 block leading-none font-black ${is8Bit ? 'font-pixel text-lg sm:text-xl text-black' : 'text-xl sm:text-2xl text-slate-900'}`}>
+            <span className={`my-1 block leading-none font-black ${isCyberpunk ? 'font-cyber-display text-2xl text-white' : 'text-xl sm:text-2xl text-slate-900'}`}>
               {occPct}%
             </span>
-            <span className={`flex items-center gap-0.5 font-bold ${is8Bit ? 'font-pixel text-[8px] text-[#047857]' : 'text-[10px] text-emerald-600'}`}>
+            <span className={`flex items-center gap-0.5 font-bold ${isCyberpunk ? 'font-cyber text-[10px] text-[#c6ff00]' : 'text-[10px] text-emerald-600'}`}>
               <ArrowUpRight className="w-3 h-3" /> 6.2% vs yday
             </span>
           </div>
-          {is8Bit ? (
-            <div className="w-14 h-7 flex items-end justify-between gap-1 pb-0.5 border-b-2 border-black bg-white">
-              <div className="w-2.5 bg-black" style={{ height: '40%' }} />
-              <div className="w-2.5 bg-[#4b5563]" style={{ height: '70%' }} />
-              <div className="w-2.5 bg-black" style={{ height: '90%' }} />
-            </div>
+          {isCyberpunk ? (
+            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
+              <path
+                d="M 0,22 Q 15,10 30,18 T 70,5"
+                fill="none"
+                stroke="#c6ff00"
+                strokeWidth="2.5"
+                filter="drop-shadow(0 0 4px #c6ff00)"
+              />
+              <circle cx="70" cy="5" r="3.5" fill="#c6ff00" />
+            </svg>
           ) : (
             <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
               <path
@@ -1718,24 +1871,29 @@ export default function OwnerDashboardPage() {
         </div>
 
         {/* 2. STAFF LOAD */}
-        <div className={`p-2.5 flex items-center justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
+        <div className={`p-3 flex items-center justify-between transition-all ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)] hover:border-[#c6ff00]' : 'neumorph-card'}`}>
           <div>
-            <span className={`block uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
+            <span className={`block uppercase tracking-wider font-bold ${isCyberpunk ? 'font-cyber-display text-[9px] text-[#cbd5e1]' : 'text-[9px] font-bold text-slate-500'}`}>
               STAFF LOAD
             </span>
-            <span className={`my-0.5 block leading-none font-black ${is8Bit ? 'font-pixel text-lg sm:text-xl text-black' : 'text-xl sm:text-2xl text-slate-900'}`}>
+            <span className={`my-1 block leading-none font-black ${isCyberpunk ? 'font-cyber-display text-2xl text-white' : 'text-xl sm:text-2xl text-slate-900'}`}>
               {staffLoad}%
             </span>
-            <span className={`block ${is8Bit ? 'font-pixel text-[8px] text-slate-600' : 'text-[10px] font-medium text-slate-600'}`}>
+            <span className={`block font-bold ${isCyberpunk ? 'font-cyber text-[10px] text-[#00f5d4]' : 'text-[10px] font-medium text-slate-600'}`}>
               {staffAvailable} available
             </span>
           </div>
-          {is8Bit ? (
-            <div className="w-14 h-7 flex items-end justify-between gap-1 pb-0.5 border-b-2 border-black bg-white">
-              <div className="w-2.5 bg-black" style={{ height: '55%' }} />
-              <div className="w-2.5 bg-[#4b5563]" style={{ height: '35%' }} />
-              <div className="w-2.5 bg-black" style={{ height: '74%' }} />
-            </div>
+          {isCyberpunk ? (
+            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
+              <path
+                d="M 0,10 Q 20,25 40,12 T 70,8"
+                fill="none"
+                stroke="#00f5d4"
+                strokeWidth="2.5"
+                filter="drop-shadow(0 0 4px #00f5d4)"
+              />
+              <circle cx="70" cy="8" r="3.5" fill="#00f5d4" />
+            </svg>
           ) : (
             <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
               <path
@@ -1750,24 +1908,29 @@ export default function OwnerDashboardPage() {
         </div>
 
         {/* 3. GUEST WAIT */}
-        <div className={`p-2.5 flex items-center justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
+        <div className={`p-3 flex items-center justify-between transition-all ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)] hover:border-[#c6ff00]' : 'neumorph-card'}`}>
           <div>
-            <span className={`block uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
+            <span className={`block uppercase tracking-wider font-bold ${isCyberpunk ? 'font-cyber-display text-[9px] text-[#cbd5e1]' : 'text-[9px] font-bold text-slate-500'}`}>
               GUEST WAIT
             </span>
-            <span className={`my-0.5 block leading-none font-black ${is8Bit ? 'font-pixel text-lg sm:text-xl text-black' : 'text-xl sm:text-2xl text-slate-900'}`}>
+            <span className={`my-1 block leading-none font-black ${isCyberpunk ? 'font-cyber-display text-2xl text-white' : 'text-xl sm:text-2xl text-slate-900'}`}>
               {avgWaitMin} min
             </span>
-            <span className={`flex items-center gap-0.5 font-bold ${is8Bit ? 'font-pixel text-[8px] text-[#047857]' : 'text-[10px] text-emerald-600'}`}>
+            <span className={`flex items-center gap-0.5 font-bold ${isCyberpunk ? 'font-cyber text-[10px] text-[#c6ff00]' : 'text-[10px] text-emerald-600'}`}>
               <ArrowDownRight className="w-3 h-3" /> 3 min today
             </span>
           </div>
-          {is8Bit ? (
-            <div className="w-14 h-7 flex items-end justify-between gap-1 pb-0.5 border-b-2 border-black bg-white">
-              <div className="w-2.5 bg-black" style={{ height: '80%' }} />
-              <div className="w-2.5 bg-[#4b5563]" style={{ height: '50%' }} />
-              <div className="w-2.5 bg-black" style={{ height: '30%' }} />
-            </div>
+          {isCyberpunk ? (
+            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
+              <path
+                d="M 0,8 Q 25,22 45,14 T 70,20"
+                fill="none"
+                stroke="#c6ff00"
+                strokeWidth="2.5"
+                filter="drop-shadow(0 0 4px #c6ff00)"
+              />
+              <circle cx="70" cy="20" r="3.5" fill="#c6ff00" />
+            </svg>
           ) : (
             <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
               <path
@@ -1782,24 +1945,29 @@ export default function OwnerDashboardPage() {
         </div>
 
         {/* 4. TODAY'S REVENUE */}
-        <div className={`p-2.5 flex items-center justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
+        <div className={`p-3 flex items-center justify-between transition-all ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)] hover:border-[#c6ff00]' : 'neumorph-card'}`}>
           <div>
-            <span className={`block uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
+            <span className={`block uppercase tracking-wider font-bold ${isCyberpunk ? 'font-cyber-display text-[9px] text-[#cbd5e1]' : 'text-[9px] font-bold text-slate-500'}`}>
               TODAY&apos;S REVENUE
             </span>
-            <span className={`my-0.5 block leading-none font-black ${is8Bit ? 'font-pixel text-lg sm:text-xl text-black' : 'text-xl sm:text-2xl text-slate-900'}`}>
+            <span className={`my-1 block leading-none font-black ${isCyberpunk ? 'font-cyber-display text-2xl text-[#c6ff00]' : 'text-xl sm:text-2xl text-slate-900'}`}>
               {formatRupees(revenueToday, true)}
             </span>
-            <span className={`flex items-center gap-0.5 font-bold ${is8Bit ? 'font-pixel text-[8px] text-[#047857]' : 'text-[10px] text-emerald-600'}`}>
+            <span className={`flex items-center gap-0.5 font-bold ${isCyberpunk ? 'font-cyber text-[10px] text-[#c6ff00]' : 'text-[10px] text-emerald-600'}`}>
               <ArrowUpRight className="w-3 h-3" /> 8.7% vs fcst
             </span>
           </div>
-          {is8Bit ? (
-            <div className="w-14 h-7 flex items-end justify-between gap-1 pb-0.5 border-b-2 border-black bg-white">
-              <div className="w-2.5 bg-black" style={{ height: '45%' }} />
-              <div className="w-2.5 bg-[#4b5563]" style={{ height: '70%' }} />
-              <div className="w-2.5 bg-black" style={{ height: '95%' }} />
-            </div>
+          {isCyberpunk ? (
+            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
+              <path
+                d="M 0,20 Q 20,15 45,8 T 70,4"
+                fill="none"
+                stroke="#c6ff00"
+                strokeWidth="2.5"
+                filter="drop-shadow(0 0 4px #c6ff00)"
+              />
+              <circle cx="70" cy="4" r="3.5" fill="#c6ff00" />
+            </svg>
           ) : (
             <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
               <path
@@ -1816,46 +1984,54 @@ export default function OwnerDashboardPage() {
 
       {/* ══════════════════════════════════════════════════════════════
           BOTTOM ROW: 4 Panels
-          1. Resort Stress Index (Circular Ring Gauge or 8bitcn Health Bars)
-          2. What-If Simulator (With EASY/NORMAL/HARD Difficulty Pills in 8bitcn)
-          3. Highest-Value Recommendation
-          4. 7-Day Stress Trend (Paired Pixel Bar Chart in 8bitcn style)
+          1. Resort Stress Index (Cyberpunk HUD Gauge)
+          2. What-If Simulator (Cyberpunk Scenario Pills)
+          3. Highest-Value Recommendation (Neon Lime Action Pill)
+          4. 7-Day Stress Trend (Dual-tone Neon Bars)
           ══════════════════════════════════════════════════════════════ */}
       <section className="shrink-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
         {/* PANEL 1: RESORT STRESS INDEX */}
-        <div className={`p-2.5 flex flex-col justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
+        <div className={`p-2.5 flex flex-col justify-between ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)]' : 'neumorph-card'}`}>
           <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
-            <span className={`uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
-              RESORT STRESS INDEX
-            </span>
-            <span className={`px-2 py-0.2 rounded-full font-bold ${is8Bit ? 'border border-black font-pixel text-[8px] bg-white text-black' : 'text-[8.5px] bg-amber-50 text-amber-700'}`}>
+            <div className="flex items-center gap-1.5">
+              {isCyberpunk && (
+                <div className="flex items-center gap-0.5">
+                  <span className="w-1 h-1 rounded-full bg-[#c6ff00]" />
+                  <span className="w-1 h-1 rounded-full bg-[#c6ff00]/60" />
+                </div>
+              )}
+              <span className={`uppercase tracking-wide ${isCyberpunk ? 'font-cyber-display text-[9px] text-white font-bold' : 'text-[9px] font-bold text-slate-500'}`}>
+                RESORT STRESS INDEX
+              </span>
+            </div>
+            <span className={`px-2 py-0.2 rounded-full font-bold ${isCyberpunk ? 'border border-[#c6ff00]/40 font-cyber text-[9px] bg-[#121822] text-[#c6ff00]' : 'text-[8.5px] bg-amber-50 text-amber-700'}`}>
               {stressLevel}
             </span>
           </div>
 
-          {is8Bit ? (
-            /* 8bitcn Segmented Red Health Meters (Exact to Reference Image) */
-            <div className="space-y-2 my-1">
+          {isCyberpunk ? (
+            /* Cyberpunk Telemetry Meters */
+            <div className="space-y-2 my-1.5">
               <div>
-                <div className="flex justify-between items-center text-[8px] font-pixel text-black mb-0.5">
-                  <span>Facility Health</span>
-                  <span>{100 - currentStress}%</span>
+                <div className="flex justify-between items-center text-[9px] font-cyber text-slate-300 mb-0.5">
+                  <span>Facility Headroom</span>
+                  <span className="text-[#c6ff00] font-bold">{100 - currentStress}%</span>
                 </div>
-                <div className="pixel-health-meter">
+                <div className="cyber-meter-track">
                   <div
-                    className="pixel-health-segmented"
+                    className="cyber-meter-bar-lime"
                     style={{ width: `${Math.max(15, 100 - currentStress)}%` }}
                   />
                 </div>
               </div>
               <div>
-                <div className="flex justify-between items-center text-[8px] font-pixel text-black mb-0.5">
-                  <span>System Stress</span>
-                  <span>{currentStress}%</span>
+                <div className="flex justify-between items-center text-[9px] font-cyber text-slate-300 mb-0.5">
+                  <span>Current Stress Load</span>
+                  <span className="text-[#00f5d4] font-bold">{currentStress}%</span>
                 </div>
-                <div className="pixel-health-meter">
+                <div className="cyber-meter-track">
                   <div
-                    className="pixel-health-segmented"
+                    className="cyber-meter-bar-cyan"
                     style={{ width: `${currentStress}%` }}
                   />
                 </div>
@@ -1892,50 +2068,58 @@ export default function OwnerDashboardPage() {
 
           <div className="grid grid-cols-3 gap-1 text-center text-[9px] pt-1 border-t border-slate-200/70">
             <div>
-              <span className={`block ${is8Bit ? 'font-pixel text-[7px] text-slate-600' : 'text-slate-500'}`}>Occupancy</span>
-              <span className={`font-bold ${is8Bit ? 'font-pixel text-[7px] text-black' : 'text-rose-600'}`}>High</span>
+              <span className={`block ${isCyberpunk ? 'font-cyber text-[8px] text-slate-400' : 'text-slate-500'}`}>Occupancy</span>
+              <span className={`font-bold ${isCyberpunk ? 'font-cyber text-[8px] text-[#ff0055]' : 'text-rose-600'}`}>High</span>
             </div>
             <div>
-              <span className={`block ${is8Bit ? 'font-pixel text-[7px] text-slate-600' : 'text-slate-500'}`}>Staff Load</span>
-              <span className={`font-bold ${is8Bit ? 'font-pixel text-[7px] text-black' : 'text-amber-600'}`}>Medium</span>
+              <span className={`block ${isCyberpunk ? 'font-cyber text-[8px] text-slate-400' : 'text-slate-500'}`}>Staff Load</span>
+              <span className={`font-bold ${isCyberpunk ? 'font-cyber text-[8px] text-[#c6ff00]' : 'text-amber-600'}`}>Medium</span>
             </div>
             <div>
-              <span className={`block ${is8Bit ? 'font-pixel text-[7px] text-slate-600' : 'text-slate-500'}`}>Maint</span>
-              <span className={`font-bold ${is8Bit ? 'font-pixel text-[7px] text-black' : 'text-emerald-600'}`}>Low</span>
+              <span className={`block ${isCyberpunk ? 'font-cyber text-[8px] text-slate-400' : 'text-slate-500'}`}>Maint</span>
+              <span className={`font-bold ${isCyberpunk ? 'font-cyber text-[8px] text-[#00f5d4]' : 'text-emerald-600'}`}>Low</span>
             </div>
           </div>
         </div>
 
         {/* PANEL 2: WHAT-IF SIMULATOR */}
-        <div id="what-if-card" className={`p-2.5 flex flex-col justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
+        <div id="what-if-card" className={`p-2.5 flex flex-col justify-between ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)]' : 'neumorph-card'}`}>
           <div>
             <div className="flex items-center justify-between pb-1 border-b border-slate-200/70 mb-1">
-              <span className={`uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
-                WHAT-IF SIMULATOR
-              </span>
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+              <div className="flex items-center gap-1.5">
+                {isCyberpunk && (
+                  <div className="flex items-center gap-0.5">
+                    <span className="w-1 h-1 rounded-full bg-[#c6ff00]" />
+                    <span className="w-1 h-1 rounded-full bg-[#c6ff00]/60" />
+                  </div>
+                )}
+                <span className={`uppercase tracking-wide ${isCyberpunk ? 'font-cyber-display text-[9px] text-white font-bold' : 'text-[9px] font-bold text-slate-500'}`}>
+                  WHAT-IF SIMULATOR
+                </span>
+              </div>
+              <Sparkles className={`w-3.5 h-3.5 ${isCyberpunk ? 'text-[#c6ff00]' : 'text-blue-600'}`} />
             </div>
 
-            {/* Select Difficulty Pills in 8bitcn Mode (Exact to Reference Image) */}
-            {is8Bit && (
+            {/* Difficulty Pills in Dark Theme Mode */}
+            {isCyberpunk && (
               <div className="grid grid-cols-3 gap-1 mb-1.5">
                 {[
-                  { label: 'EASY', scn: 'Low Season / 65% Occupancy' },
-                  { label: 'NORMAL', scn: '98% Occupancy — evening peak' },
-                  { label: 'HARD', scn: 'Sudden Monsoon Storm (3 PM)' },
+                  { label: 'CALM', scn: 'Low Season / 65% Occupancy' },
+                  { label: 'PEAK', scn: '98% Occupancy — evening peak' },
+                  { label: 'CRISIS', scn: 'Sudden Monsoon Storm (3 PM)' },
                 ].map((d) => (
                   <button
                     key={d.label}
                     onClick={() => {
                       setSelectedScenario(d.scn)
-                      if (d.label === 'EASY') setSimulationResult('EASY MODE (65% Occ): Low load, 18 idle staff on standby.')
-                      if (d.label === 'NORMAL') setSimulationResult('NORMAL MODE (91% Occ): Evening peak dining & pool capacity.')
-                      if (d.label === 'HARD') setSimulationResult('HARD MODE (Monsoon Storm): High wind. Pool evacuated, dining surged.')
+                      if (d.label === 'CALM') setSimulationResult('CALM MODE (65% Occ): Low load, 18 idle staff on standby.')
+                      if (d.label === 'PEAK') setSimulationResult('PEAK MODE (91% Occ): Evening peak dining & pool capacity.')
+                      if (d.label === 'CRISIS') setSimulationResult('CRISIS MODE (Monsoon Storm): High wind. Pool evacuated, dining surged.')
                     }}
-                    className={`py-1 text-[7.5px] font-pixel uppercase rounded-full border border-black transition-all cursor-pointer ${
+                    className={`py-1 text-[8px] font-cyber-display font-bold uppercase rounded-none border transition-all cursor-pointer ${
                       selectedScenario === d.scn
-                        ? 'bg-black text-white shadow-[1px_1px_0px_#000]'
-                        : 'bg-white text-black hover:bg-slate-100'
+                        ? 'bg-[#c6ff00] text-black border-[#c6ff00] shadow-[0_0_10px_rgba(198,255,0,0.4)] font-black'
+                        : 'bg-[#101622] text-white border-[#c6ff00]/30 hover:border-[#c6ff00] hover:text-[#c6ff00]'
                     }`}
                   >
                     {d.label}
@@ -1947,7 +2131,7 @@ export default function OwnerDashboardPage() {
             <select
               value={selectedScenario}
               onChange={(e) => setSelectedScenario(e.target.value)}
-              className={`w-full p-1 text-[11px] font-semibold rounded-xl bg-white border border-slate-200 text-slate-800 shadow-xs cursor-pointer mb-1 ${is8Bit ? 'font-pixel text-[8px] border-2 border-black rounded-none shadow-[2px_2px_0px_#000]' : ''}`}
+              className={`w-full p-1.5 text-[11px] font-semibold rounded-xl bg-white border border-slate-200 text-slate-800 shadow-xs cursor-pointer mb-1 ${isCyberpunk ? 'font-cyber text-[9.5px] bg-[#090d14] text-white border-[#c6ff00]/40 rounded-none focus:outline-none focus:border-[#c6ff00]' : ''}`}
             >
               <option value="98% Occupancy — evening peak">98% Occupancy — evening peak</option>
               <option value="Sudden Monsoon Storm (3 PM)">Sudden Monsoon Storm (3 PM)</option>
@@ -1955,11 +2139,11 @@ export default function OwnerDashboardPage() {
             </select>
 
             {simulationResult ? (
-              <p className={`p-1 rounded-lg leading-tight line-clamp-2 ${is8Bit ? 'font-pixel text-[8px] bg-slate-100 text-black border border-black' : 'text-[9.5px] font-medium text-blue-900 bg-blue-50/80'}`}>
+              <p className={`p-1.5 rounded-sm leading-tight line-clamp-2 ${isCyberpunk ? 'font-cyber text-[9.5px] bg-[#141b26] text-[#c6ff00] border border-[#c6ff00]/40 font-bold' : 'text-[9.5px] font-medium text-blue-900 bg-blue-50/80'}`}>
                 {simulationResult}
               </p>
             ) : (
-              <p className={`leading-tight ${is8Bit ? 'font-pixel text-[8px] text-slate-500' : 'text-[9.5px] text-slate-500'}`}>
+              <p className={`leading-tight ${isCyberpunk ? 'font-cyber text-[9.5px] text-slate-200 font-medium' : 'text-[9.5px] text-slate-500'}`}>
                 Simulate future demand spikes and staffing stress ahead of time.
               </p>
             )}
@@ -1968,10 +2152,10 @@ export default function OwnerDashboardPage() {
           <button
             onClick={handleRunSimulation}
             disabled={simulating}
-            className={`w-full py-1 font-bold mt-1 cursor-pointer transition-transform active:translate-x-[2px] active:translate-y-[2px] ${
-              is8Bit
-                ? 'pixel-pill-black text-[8px] rounded-full'
-                : 'neumorph-btn-blue text-[11px]'
+            className={`w-full py-1.5 font-bold mt-1 cursor-pointer transition-all ${
+              isCyberpunk
+                ? 'cyber-btn-lime text-[10px]'
+                : 'neumorph-btn-blue text-[11px] rounded-xl'
             }`}
           >
             {simulating ? 'Simulating...' : 'Run Simulation →'}
@@ -1979,39 +2163,47 @@ export default function OwnerDashboardPage() {
         </div>
 
         {/* PANEL 3: HIGHEST-VALUE RECOMMENDATION */}
-        <div className={`p-2.5 flex flex-col justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
+        <div className={`p-2.5 flex flex-col justify-between ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)]' : 'neumorph-card'}`}>
           <div>
             <div className="flex items-center justify-between pb-1 border-b border-slate-200/70 mb-1">
-              <span className={`uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
-                RECOMMENDATION
-              </span>
-              <span className={`px-1.5 py-0.2 rounded-full font-bold ${is8Bit ? 'border border-black font-pixel text-[8px] bg-white text-black' : 'text-[8px] bg-amber-100 text-amber-800'}`}>
+              <div className="flex items-center gap-1.5">
+                {isCyberpunk && (
+                  <div className="flex items-center gap-0.5">
+                    <span className="w-1 h-1 rounded-full bg-[#c6ff00]" />
+                    <span className="w-1 h-1 rounded-full bg-[#c6ff00]/60" />
+                  </div>
+                )}
+                <span className={`uppercase tracking-wide ${isCyberpunk ? 'font-cyber-display text-[9px] text-white font-bold' : 'text-[9px] font-bold text-slate-500'}`}>
+                  RECOMMENDATION
+                </span>
+              </div>
+              <span className={`px-1.5 py-0.2 rounded-full font-bold ${isCyberpunk ? 'border border-[#c6ff00]/40 font-cyber text-[8.5px] bg-[#121822] text-[#c6ff00]' : 'text-[8px] bg-amber-100 text-amber-800'}`}>
                 PRIORITY
               </span>
             </div>
 
-            <h4 className={`font-bold leading-snug line-clamp-1 mb-0.5 ${is8Bit ? 'font-pixel text-[9px] text-black' : 'text-[11px] text-slate-900'}`}>
+            <h4 className={`font-bold leading-snug line-clamp-1 mb-0.5 ${isCyberpunk ? 'font-cyber-display text-[11px] text-white font-black' : 'text-[11px] text-slate-900'}`}>
               {topRecommendation.title}
             </h4>
 
-            <p className={`leading-tight line-clamp-2 ${is8Bit ? 'font-pixel text-[8px] text-slate-600' : 'text-[9.5px] text-slate-600'}`}>
+            <p className={`leading-tight line-clamp-2 ${isCyberpunk ? 'font-cyber text-[9.5px] text-slate-200 font-medium' : 'text-[9.5px] text-slate-600'}`}>
               {topRecommendation.impactLine}
             </p>
           </div>
 
           <div>
             {approvedIds.has(topRecommendation.id) ? (
-              <div className={`w-full py-1 rounded-full text-center flex items-center justify-center gap-1 font-bold ${is8Bit ? 'border-2 border-black bg-black text-white font-pixel text-[8px]' : 'bg-emerald-100 text-emerald-800 text-[11px]'}`}>
+              <div className={`w-full py-1.5 text-center flex items-center justify-center gap-1 font-bold ${isCyberpunk ? 'bg-[#121822] text-[#c6ff00] border border-[#c6ff00]/40 font-cyber text-[9.5px]' : 'bg-emerald-100 text-emerald-800 text-[11px] rounded-xl'}`}>
                 <Check className="w-3.5 h-3.5" /> Applied
               </div>
             ) : (
               <button
                 onClick={handleApplyRecommendation}
                 disabled={applying}
-                className={`w-full py-1 font-bold mt-1 cursor-pointer transition-transform active:translate-x-[2px] active:translate-y-[2px] ${
-                  is8Bit
-                    ? 'pixel-pill-black text-[8px] rounded-full'
-                    : 'neumorph-btn-blue text-[11px]'
+                className={`w-full py-1.5 font-bold mt-1 cursor-pointer transition-all ${
+                  isCyberpunk
+                    ? 'cyber-btn-lime text-[10px]'
+                    : 'neumorph-btn-blue text-[11px] rounded-xl'
                 }`}
               >
                 {applying ? 'Applying...' : 'Apply Recommendation →'}
@@ -2020,33 +2212,41 @@ export default function OwnerDashboardPage() {
           </div>
         </div>
 
-        {/* PANEL 4: 7-DAY STRESS TREND LINE (Paired Pixel Bar Chart in 8bitcn mode) */}
-        <div className={`p-2.5 flex flex-col justify-between ${is8Bit ? 'bg-white border-3 border-black shadow-[4px_4px_0px_#000]' : 'neumorph-card'}`}>
+        {/* PANEL 4: 7-DAY STRESS TREND */}
+        <div className={`p-2.5 flex flex-col justify-between ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)]' : 'neumorph-card'}`}>
           <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
-            <span className={`uppercase tracking-wide ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[9px] font-bold text-slate-500'}`}>
-              7-DAY STRESS TREND
-            </span>
-            <span className={`font-bold ${is8Bit ? 'font-pixel text-[8px] text-black' : 'text-[11px] text-blue-600'}`}>
+            <div className="flex items-center gap-1.5">
+              {isCyberpunk && (
+                <div className="flex items-center gap-0.5">
+                  <span className="w-1 h-1 rounded-full bg-[#c6ff00]" />
+                  <span className="w-1 h-1 rounded-full bg-[#c6ff00]/60" />
+                </div>
+              )}
+              <span className={`uppercase tracking-wide ${isCyberpunk ? 'font-cyber-display text-[9px] text-white font-bold' : 'text-[9px] font-bold text-slate-500'}`}>
+                7-DAY STRESS TREND
+              </span>
+            </div>
+            <span className={`font-bold ${isCyberpunk ? 'font-cyber text-[10px] text-[#c6ff00]' : 'text-[11px] text-blue-600'}`}>
               Current: {currentStress}
             </span>
           </div>
 
-          {is8Bit ? (
-            /* Paired Pixel Bar Chart (Exact match to "Desktop vs Mobile visitors" in reference image) */
-            <div className="h-14 flex items-end justify-between gap-1 px-1 pt-1 pb-0.5 border-b-2 border-l-2 border-black bg-white my-0.5">
+          {isCyberpunk ? (
+            /* Dual-tone Neon Cyber Bars */
+            <div className="h-14 flex items-end justify-between gap-1 px-1.5 pt-1 pb-0.5 border-b border-l border-[#c6ff00]/30 bg-[#080a0d] my-0.5">
               {[
-                { label: '09', black: 38, gray: 22 },
-                { label: '10', black: 82, gray: 58 },
-                { label: '11', black: 65, gray: 32 },
-                { label: '12', black: 25, gray: 48 },
-                { label: '13', black: 60, gray: 38 },
-                { label: '14', black: 64, gray: 44 },
-                { label: '15', black: 78, gray: 52 },
+                { label: '09', lime: 38, cyan: 22 },
+                { label: '10', lime: 82, cyan: 58 },
+                { label: '11', lime: 65, cyan: 32 },
+                { label: '12', lime: 25, cyan: 48 },
+                { label: '13', lime: 60, cyan: 38 },
+                { label: '14', lime: 64, cyan: 44 },
+                { label: '15', lime: 78, cyan: 52 },
               ].map((d, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center h-full justify-end">
                   <div className="flex items-end gap-0.5 w-full justify-center h-full">
-                    <div style={{ height: `${d.black}%` }} className="w-1.5 sm:w-2 bg-black border-t border-l border-r border-black" />
-                    <div style={{ height: `${d.gray}%` }} className="w-1.5 sm:w-2 bg-[#4b5563] border-t border-l border-r border-black" />
+                    <div style={{ height: `${d.lime}%` }} className="w-1.5 sm:w-2 bg-[#c6ff00] shadow-[0_0_6px_#c6ff00]" />
+                    <div style={{ height: `${d.cyan}%` }} className="w-1.5 sm:w-2 bg-[#00f5d4] shadow-[0_0_6px_#00f5d4]" />
                   </div>
                 </div>
               ))}
@@ -2081,7 +2281,7 @@ export default function OwnerDashboardPage() {
             </div>
           )}
 
-          <div className={`flex justify-between pt-0.5 border-t border-slate-200/70 font-semibold ${is8Bit ? 'font-pixel text-[7px] text-black' : 'text-[8.5px] text-slate-500'}`}>
+          <div className={`flex justify-between pt-0.5 border-t border-slate-200/70 font-semibold ${isCyberpunk ? 'font-cyber-display text-[8px] text-slate-300 font-bold' : 'text-[8.5px] text-slate-500'}`}>
             <span>09 May</span>
             <span>11 May</span>
             <span>13 May</span>
@@ -2643,8 +2843,18 @@ export default function OwnerDashboardPage() {
 
             <div className="pt-2 flex items-center justify-end gap-3">
               <button
+                onClick={() => {
+                  setShowHotelAggregateModal(false)
+                  setIsHotelDiving(true)
+                }}
+                className="py-2.5 px-4 rounded-full neumorph-btn text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center justify-center gap-1.5"
+              >
+                <Eye className="w-3.5 h-3.5 text-blue-600" />
+                <span>Play 3D Dive</span>
+              </button>
+              <button
                 onClick={() => setShowHotelAggregateModal(false)}
-                className="w-full py-2.5 neumorph-btn-blue text-xs font-bold"
+                className="flex-1 py-2.5 neumorph-btn-blue text-xs font-bold"
               >
                 Close Hotel Summary
               </button>

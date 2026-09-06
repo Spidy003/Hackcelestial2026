@@ -18,9 +18,9 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Mono:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Orbitron:wght@600;700;800;900&family=Press+Start+2P&family=IBM+Plex+Mono:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet" />
       </head>
-      <body className="min-h-screen bg-[#070b0e] text-slate-100 antialiased selection:bg-[#00ff66] selection:text-black">
+      <body className="min-h-screen bg-[#080b0f] text-slate-100 antialiased selection:bg-[#c6ff00] selection:text-black">
         <SocketProvider>
           <SidebarLayout>
             {children}

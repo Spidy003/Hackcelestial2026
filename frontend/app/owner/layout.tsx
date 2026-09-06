@@ -7,39 +7,39 @@ import { useResortStore } from '@/lib/store'
 import { OwnerThemeProvider, useOwnerTheme } from '@/lib/owner-theme'
 import { 
   Home, Calendar, Bell, Settings, LayoutDashboard, 
-  FileText, Menu, X, Sparkles, Layers
+  FileText, Menu, X, Sparkles, Layers, Zap, ShieldCheck
 } from 'lucide-react'
 
 function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { weather } = useResortStore()
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
-  const { theme, toggleTheme, is8Bit } = useOwnerTheme()
+  const { theme, toggleTheme, isCyberpunk } = useOwnerTheme()
 
   const isWeekly = pathname.endsWith('/week')
 
   return (
     <div
       className={`h-screen w-screen overflow-hidden flex flex-col lg:flex-row antialiased select-none transition-colors duration-150 ${
-        is8Bit
-          ? 'theme-8bitcn bg-white text-black font-pixel'
+        isCyberpunk
+          ? 'theme-dark theme-cyberpunk bg-[#080a0d] text-slate-100 font-cyber'
           : 'owner-neumorphic bg-[#f0f3f8] text-slate-800'
       }`}
     >
       {/* ── Mobile Top Bar (<1024px) ── */}
       <header
         className={`lg:hidden shrink-0 h-14 px-4 flex items-center justify-between ${
-          is8Bit
-            ? 'bg-white border-b-3 border-black shadow-[0_4px_0px_#000]'
+          isCyberpunk
+            ? 'bg-[#0b0f15] border-b border-[#c6ff00]/30 shadow-[0_4px_20px_rgba(0,0,0,0.8)]'
             : 'bg-[#f0f3f8] border-b border-white/80 shadow-[0_4px_12px_#d1d9e6]'
         }`}
       >
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-            className={`w-9 h-9 flex items-center justify-center cursor-pointer ${
-              is8Bit
-                ? 'bg-white border-2 border-black shadow-[2px_2px_0px_#000]'
+            className={`w-9 h-9 flex items-center justify-center cursor-pointer transition-all ${
+              isCyberpunk
+                ? 'bg-[#121822] text-[#c6ff00] border border-[#c6ff00]/40 rounded-xl shadow-[0_0_10px_rgba(198,255,0,0.15)]'
                 : 'neumorph-card text-slate-700 active:shadow-[inset_2px_2px_5px_#d1d9e6]'
             }`}
             aria-label="Toggle Navigation"
@@ -49,36 +49,36 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             <div
               className={`w-7 h-7 flex items-center justify-center font-bold text-xs ${
-                is8Bit
-                  ? 'bg-black text-white border-2 border-black shadow-[2px_2px_0px_#000]'
+                isCyberpunk
+                  ? 'bg-[#c6ff00] text-black font-cyber-display rounded-lg shadow-[0_0_12px_rgba(198,255,0,0.5)] font-black'
                   : 'rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md'
               }`}
             >
               360
             </div>
-            <span className="font-bold text-sm tracking-tight">
+            <span className={`font-bold text-sm tracking-tight ${isCyberpunk ? 'font-cyber-display text-white' : ''}`}>
               SMART RESORT
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Quick theme switch on mobile top bar */}
+          {/* Theme switcher on mobile */}
           <button
             onClick={toggleTheme}
-            className={`px-2.5 py-1 text-[9px] font-pixel uppercase cursor-pointer ${
-              is8Bit
-                ? 'bg-black text-white border-2 border-black shadow-[2px_2px_0px_#000] rounded-full'
-                : 'bg-slate-900 text-white border border-slate-700 shadow-xs rounded-full'
+            className={`px-3 py-1 text-[10px] font-bold uppercase cursor-pointer rounded-full transition-all ${
+              isCyberpunk
+                ? 'bg-[#c6ff00] text-black font-cyber-display shadow-[0_0_15px_rgba(198,255,0,0.4)]'
+                : 'bg-slate-900 text-white border border-slate-700 shadow-xs'
             }`}
           >
-            {is8Bit ? '👔 CLASSIC' : '🕹️ 8BIT'}
+            {isCyberpunk ? '🌙 DARK THEME' : '👔 EXECUTIVE'}
           </button>
           <Link
             href="/"
-            className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-              is8Bit
-                ? 'bg-white text-black border-2 border-black shadow-[2px_2px_0px_#000]'
+            className={`px-2.5 py-1 text-xs font-semibold rounded-full transition-colors ${
+              isCyberpunk
+                ? 'bg-[#141b25] text-[#c6ff00] border border-[#c6ff00]/30 hover:border-[#c6ff00]'
                 : 'bg-slate-200 text-slate-700 shadow-sm hover:bg-slate-300'
             }`}
           >
@@ -90,7 +90,7 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
       {/* ── Mobile Drawer Backdrop ── */}
       {mobileDrawerOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs"
+          className="lg:hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
           onClick={() => setMobileDrawerOpen(false)}
         />
       )}
@@ -98,8 +98,8 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
       {/* ── Left Sidebar (Desktop Fixed / Mobile Drawer) ── */}
       <aside
         className={`fixed lg:static top-0 left-0 z-50 h-screen w-64 shrink-0 flex flex-col justify-between p-4 transition-transform duration-200 ${
-          is8Bit
-            ? 'bg-white border-r-3 border-black shadow-[4px_0_0px_#000]'
+          isCyberpunk
+            ? 'bg-[#0a0e14] border-r border-[#c6ff00]/25 shadow-[10px_0_30px_rgba(0,0,0,0.8)]'
             : 'bg-[#f0f3f8] border-r border-white/80 shadow-[4px_0_16px_rgba(209,217,230,0.4)]'
         } ${
           mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -107,29 +107,29 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
       >
         <div className="flex flex-col gap-3.5">
           {/* Brand Header */}
-          <div className={`flex items-center justify-between pb-3 ${is8Bit ? 'border-b-2 border-black' : 'border-b border-slate-200/80'}`}>
+          <div className={`flex items-center justify-between pb-3 ${isCyberpunk ? 'border-b border-[#c6ff00]/20' : 'border-b border-slate-200/80'}`}>
             <div className="flex items-center gap-2.5">
               <div
                 className={`w-9 h-9 flex items-center justify-center font-bold text-sm ${
-                  is8Bit
-                    ? 'bg-black text-white border-2 border-black shadow-[3px_3px_0px_#000]'
+                  isCyberpunk
+                    ? 'bg-[#c6ff00] text-black font-cyber-display rounded-xl shadow-[0_0_20px_rgba(198,255,0,0.5)] font-black tracking-wider'
                     : 'rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-[3px_3px_8px_rgba(37,99,235,0.4)]'
                 }`}
               >
                 360
               </div>
               <div>
-                <h1 className="font-bold text-sm tracking-tight leading-none">
+                <h1 className={`font-bold text-sm tracking-tight leading-none ${isCyberpunk ? 'font-cyber-display text-white uppercase' : ''}`}>
                   Smart Resort
                 </h1>
-                <span className={`text-[10px] font-medium tracking-wide ${is8Bit ? 'text-black' : 'text-blue-600'}`}>
-                  Executive Suite • 84 Keys
+                <span className={`text-[10px] font-medium tracking-wide ${isCyberpunk ? 'text-[#c6ff00] font-cyber' : 'text-blue-600'}`}>
+                  Owner Dashboard • 84 Keys
                 </span>
               </div>
             </div>
             <button
               onClick={() => setMobileDrawerOpen(false)}
-              className="lg:hidden text-slate-500 hover:text-slate-800"
+              className="lg:hidden text-slate-400 hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
@@ -138,22 +138,22 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
           {/* Theme Switcher Button directly in Sidebar */}
           <button
             onClick={toggleTheme}
-            className={`w-full py-2 px-3 flex items-center justify-center gap-2 font-bold cursor-pointer transition-transform active:translate-x-[2px] active:translate-y-[2px] ${
-              is8Bit
-                ? 'pixel-pill-black text-[9px]'
+            className={`w-full py-2.5 px-3 flex items-center justify-center gap-2 font-bold cursor-pointer rounded-xl transition-all duration-150 ${
+              isCyberpunk
+                ? 'cyber-pill-lime text-[10px]'
                 : 'neumorph-btn text-slate-800 text-xs hover:text-blue-600'
             }`}
-            title="Toggle between Executive Neumorphic UI and Retro 8bitcn UI"
+            title="Toggle between Dark Theme and Executive UI"
           >
-            {is8Bit ? (
+            {isCyberpunk ? (
               <>
-                <Layers className="w-3.5 h-3.5 text-emerald-400" />
-                <span>👔 SWITCH TO EXECUTIVE UI</span>
+                <span className="text-black font-bold">🌙</span>
+                <span className="font-cyber-display">DARK THEME</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>🕹️ SWITCH TO 8bitcn UI</span>
+                <span>👔 EXECUTIVE VIEW</span>
               </>
             )}
           </button>
@@ -168,9 +168,9 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
             ].map(({ icon: Icon, title }, idx) => (
               <button
                 key={idx}
-                className={`h-9 flex items-center justify-center cursor-pointer ${
-                  is8Bit
-                    ? 'bg-white border-2 border-black rounded-lg shadow-[2px_2px_0px_#000] text-black hover:bg-slate-100'
+                className={`h-9 flex items-center justify-center cursor-pointer transition-all ${
+                  isCyberpunk
+                    ? 'bg-[#101620] border border-[#c6ff00]/25 rounded-xl text-slate-300 hover:text-[#c6ff00] hover:border-[#c6ff00] hover:shadow-[0_0_12px_rgba(198,255,0,0.25)]'
                     : 'rounded-xl neumorph-btn text-slate-600 hover:text-slate-800'
                 }`}
                 title={title}
@@ -183,15 +183,15 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
           {/* View Switcher: Owner vs Operations */}
           <div
             className={`p-1 flex items-center justify-between rounded-xl gap-1 ${
-              is8Bit
-                ? 'border-2 border-black bg-white shadow-[2px_2px_0px_#000]'
+              isCyberpunk
+                ? 'bg-[#090d13] border border-[#c6ff00]/25 rounded-xl'
                 : 'neumorph-inset rounded-2xl'
             }`}
           >
             <span
-              className={`flex-1 py-1 text-center font-semibold text-xs ${
-                is8Bit
-                  ? 'bg-black text-white rounded-md font-pixel text-[9px]'
+              className={`flex-1 py-1 text-center font-semibold text-xs rounded-lg ${
+                isCyberpunk
+                  ? 'bg-[#c6ff00] text-black font-cyber-display font-bold text-[10px] shadow-[0_0_10px_rgba(198,255,0,0.3)]'
                   : 'rounded-xl bg-white shadow-sm text-blue-700'
               }`}
             >
@@ -199,9 +199,9 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
             </span>
             <Link
               href="/"
-              className={`flex-1 py-1 text-center font-medium text-xs rounded-md transition-colors ${
-                is8Bit
-                  ? 'text-black hover:bg-slate-100 font-pixel text-[9px]'
+              className={`flex-1 py-1 text-center font-medium text-xs rounded-lg transition-colors ${
+                isCyberpunk
+                  ? 'text-slate-400 hover:text-[#c6ff00] font-cyber text-[10px]'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -214,55 +214,55 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
             <Link
               href="/owner"
               onClick={() => setMobileDrawerOpen(false)}
-              className={`w-full px-3.5 py-2.5 flex items-center gap-3 transition-all ${
-                is8Bit
+              className={`w-full px-3.5 py-2.5 flex items-center gap-3 transition-all rounded-xl ${
+                isCyberpunk
                   ? !isWeekly
-                    ? 'bg-black text-white border-2 border-black shadow-[3px_3px_0px_#000] rounded-full font-pixel text-[10px]'
-                    : 'bg-white text-black border-2 border-black shadow-[2px_2px_0px_#000] rounded-full font-pixel text-[10px] hover:bg-slate-50'
+                    ? 'bg-[#c6ff00] text-black font-cyber-display font-black text-[11px] shadow-[0_0_20px_rgba(198,255,0,0.4)]'
+                    : 'bg-[#101620] text-slate-300 border border-[#c6ff00]/25 hover:border-[#c6ff00] hover:text-white font-cyber text-[11px]'
                   : !isWeekly
                   ? 'rounded-2xl neumorph-btn-blue font-semibold shadow-[4px_4px_12px_rgba(37,99,235,0.35)]'
                   : 'rounded-2xl neumorph-btn text-slate-700 font-medium'
               }`}
             >
               <LayoutDashboard className="w-4 h-4 shrink-0" />
-              <span className={is8Bit ? 'text-[9px]' : 'text-xs'}>Dashboard</span>
+              <span className={isCyberpunk ? 'font-cyber-display' : 'text-xs'}>Dashboard</span>
             </Link>
 
             <Link
               href="/owner/week"
               onClick={() => setMobileDrawerOpen(false)}
-              className={`w-full px-3.5 py-2.5 flex items-center gap-3 transition-all ${
-                is8Bit
+              className={`w-full px-3.5 py-2.5 flex items-center gap-3 transition-all rounded-xl ${
+                isCyberpunk
                   ? isWeekly
-                    ? 'bg-black text-white border-2 border-black shadow-[3px_3px_0px_#000] rounded-full font-pixel text-[10px]'
-                    : 'bg-white text-black border-2 border-black shadow-[2px_2px_0px_#000] rounded-full font-pixel text-[10px] hover:bg-slate-50'
+                    ? 'bg-[#c6ff00] text-black font-cyber-display font-black text-[11px] shadow-[0_0_20px_rgba(198,255,0,0.4)]'
+                    : 'bg-[#101620] text-slate-300 border border-[#c6ff00]/25 hover:border-[#c6ff00] hover:text-white font-cyber text-[11px]'
                   : isWeekly
                   ? 'rounded-2xl neumorph-btn-blue font-semibold shadow-[4px_4px_12px_rgba(37,99,235,0.35)]'
                   : 'rounded-2xl neumorph-btn text-slate-700 font-medium'
               }`}
             >
               <FileText className="w-4 h-4 shrink-0" />
-              <span className={is8Bit ? 'text-[9px]' : 'text-xs'}>Weekly Briefing</span>
+              <span className={isCyberpunk ? 'font-cyber-display' : 'text-xs'}>Weekly Briefing</span>
             </Link>
           </nav>
         </div>
 
         {/* Bottom Area: System Status Block + User Chip */}
-        <div className={`space-y-2.5 pt-3 ${is8Bit ? 'border-t-2 border-black' : 'border-t border-slate-200/80'}`}>
+        <div className={`space-y-2.5 pt-3 ${isCyberpunk ? 'border-t border-[#c6ff00]/20' : 'border-t border-slate-200/80'}`}>
           {/* Status Chip */}
           <div
             className={`p-2.5 flex items-center gap-2.5 ${
-              is8Bit
-                ? 'bg-white border-2 border-black shadow-[2px_2px_0px_#000] rounded-md'
+              isCyberpunk
+                ? 'bg-[#101620] border border-[#c6ff00]/30 rounded-xl shadow-[0_0_15px_rgba(198,255,0,0.06)]'
                 : 'neumorph-card-sm'
             }`}
           >
-            <div className={`w-3 h-3 shrink-0 ${is8Bit ? 'bg-[#00ff66] border border-black' : 'rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse'}`} />
+            <div className={`w-3 h-3 shrink-0 ${isCyberpunk ? 'bg-[#c6ff00] rounded-full shadow-[0_0_10px_#c6ff00] animate-pulse' : 'rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse'}`} />
             <div>
-              <span className={`text-[10px] font-bold block leading-tight ${is8Bit ? 'font-pixel' : ''}`}>
-                AI SYSTEM ONLINE
+              <span className={`text-[10px] font-bold block leading-tight ${isCyberpunk ? 'font-cyber-display text-white' : ''}`}>
+                [SYS // OPERATIONAL]
               </span>
-              <span className="text-[9px] text-slate-500 block leading-tight">
+              <span className={`text-[9px] block leading-tight ${isCyberpunk ? 'text-[#8b9bb4]' : 'text-slate-500'}`}>
                 All departments running
               </span>
             </div>
@@ -271,25 +271,25 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
           {/* User Chip */}
           <div
             className={`p-2 flex items-center gap-2.5 ${
-              is8Bit
-                ? 'bg-white border-2 border-black shadow-[2px_2px_0px_#000] rounded-md'
+              isCyberpunk
+                ? 'bg-[#101620] border border-[#c6ff00]/20 rounded-xl'
                 : 'neumorph-card-sm'
             }`}
           >
             <div
               className={`w-7 h-7 font-bold text-xs flex items-center justify-center shrink-0 ${
-                is8Bit
-                  ? 'bg-black text-white border border-black font-pixel text-[9px]'
+                isCyberpunk
+                  ? 'bg-[#090d13] text-[#c6ff00] border border-[#c6ff00]/50 rounded-lg font-cyber-display text-[10px]'
                   : 'rounded-full bg-gradient-to-tr from-slate-800 to-slate-600 text-white shadow-inner'
               }`}
             >
               RM
             </div>
             <div className="overflow-hidden">
-              <span className={`font-semibold text-xs block truncate leading-tight ${is8Bit ? 'font-pixel text-[9px]' : 'text-slate-900'}`}>
+              <span className={`font-semibold text-xs block truncate leading-tight ${isCyberpunk ? 'font-cyber-display text-white text-[10px]' : 'text-slate-900'}`}>
                 Resort Manager
               </span>
-              <span className="text-[9px] text-slate-500 block truncate leading-tight">
+              <span className={`text-[9px] block truncate leading-tight ${isCyberpunk ? 'text-[#8b9bb4]' : 'text-slate-500'}`}>
                 Meridian Bay Resort
               </span>
             </div>
