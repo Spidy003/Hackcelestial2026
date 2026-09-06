@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useOwnerTheme } from '@/lib/owner-theme'
 import Retro8BitcnWidget from '@/components/Retro8BitcnWidget'
+import DemoReportAlertModal from '@/components/DemoReportAlertModal'
 
 
 
@@ -589,6 +590,7 @@ export default function OwnerDashboardPage() {
 
   // Modal states for middle-of-screen popup
   const [activeModalAlert, setActiveModalAlert] = useState<AlertItem | null>(null)
+  const [showDemoReportModal, setShowDemoReportModal] = useState(false)
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null)
   const [selectedPinDetails, setSelectedPinDetails] = useState<VisualPin | null>(null)
   const [showHotelAggregateModal, setShowHotelAggregateModal] = useState(false)
@@ -737,6 +739,15 @@ export default function OwnerDashboardPage() {
   // ── 3. Exact Alerts Specified by User + Live Guest Escalations ──
   const rawAlerts: AlertItem[] = [
     {
+      id: 'alt-demo-report-904',
+      title: '🚨 REPORT #REP-904: Cold Storage & VIP Villa 102 Anomaly',
+      severity: 'high',
+      line: 'Compressor anomaly + VIP Singhania GERS 58. Autonomous multi-agent recovery active. ₹54K at risk.',
+      time: 'Just now • Urgent',
+      zone: 'Zone 4 Cold Storage & Villa 102',
+      recommendedAction: 'Dispatch HVAC Tech Anil Pawar with bypass valve (ETA: 3m). Upgrade VIP to Seaside Cabana with vintage wine.'
+    },
+    {
       id: 'alt-pool',
       title: 'Swimming Pool Maintenance Notice',
       severity: 'high',
@@ -774,7 +785,14 @@ export default function OwnerDashboardPage() {
     },
   ]
 
-  const alertItems = [...escalatedAlerts, ...rawAlerts].filter(a => !acknowledgedAlerts.has(a.id))
+  const alertItems = useMemo(() => {
+    const list = [...escalatedAlerts, ...rawAlerts].filter(a => !acknowledgedAlerts.has(a.id))
+    // For demo video recordings, always ensure the critical incident report alert remains available:
+    if (list.length === 0) {
+      return [rawAlerts[0]]
+    }
+    return list
+  }, [escalatedAlerts, rawAlerts, acknowledgedAlerts])
 
   // ── 4. Highest-Value Recommendation ──
   const topRecommendation = useMemo(() => {
@@ -1299,7 +1317,7 @@ export default function OwnerDashboardPage() {
 
         setEscalatedAlerts(activeEscalated)
 
-        if (ackIds.size > 0) setAcknowledgedAlerts(prev => new Set([...prev, ...ackIds]))
+        // Keep pin overrides active without wiping out demo alerts from the queue
         if (Object.keys(overrides).length > 0) setPinOverrides(prev => ({ ...prev, ...overrides }))
       }
     }
@@ -2014,9 +2032,22 @@ export default function OwnerDashboardPage() {
                 Resort Alerts
               </h3>
             </div>
-            <span className={`text-[10px] font-medium ${isCyberpunk ? 'text-slate-400 font-cyber' : 'text-slate-500'}`}>
-              Newest first
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  setAcknowledgedAlerts(new Set())
+                  setShowDemoReportModal(true)
+                }}
+                className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-500 hover:bg-rose-600 text-white shadow-xs cursor-pointer flex items-center gap-1 animate-pulse"
+                title="Open Demo Incident Report & Alert"
+              >
+                <Flame className="w-2.5 h-2.5 fill-current" />
+                <span>Demo Alert</span>
+              </button>
+              <span className={`text-[10px] font-medium ${isCyberpunk ? 'text-slate-400 font-cyber' : 'text-slate-500'}`}>
+                Newest first
+              </span>
+            </div>
           </div>
 
           {/* Interactive Alert List */}
@@ -2025,14 +2056,32 @@ export default function OwnerDashboardPage() {
               <div className="h-full flex flex-col items-center justify-center text-center p-4">
                 <CheckCircle2 className="w-7 h-7 text-emerald-500 mb-1" />
                 <span className="text-xs font-semibold text-slate-700">All Alerts Cleared</span>
-                <span className="text-[10px] text-slate-500">Zero active operational issues</span>
+                <span className="text-[10px] text-slate-500 mb-2">Zero active operational issues</span>
+                <button
+                  onClick={() => {
+                    setAcknowledgedAlerts(new Set())
+                    setShowDemoReportModal(true)
+                  }}
+                  className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-full text-[10px] font-bold shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <Flame className="w-3 h-3" />
+                  <span>Restore Demo Alerts &amp; Report</span>
+                </button>
               </div>
             ) : (
               alertItems.map((alt) => (
                 <div
                   key={alt.id}
-                  onClick={() => setActiveModalAlert(alt)}
-                  className="p-2 neumorph-card-sm transition-all hover:translate-x-1 cursor-pointer group flex items-start justify-between gap-2"
+                  onClick={() => {
+                    if (alt.id.includes('demo')) {
+                      setShowDemoReportModal(true)
+                    } else {
+                      setActiveModalAlert(alt)
+                    }
+                  }}
+                  className={`p-2 neumorph-card-sm transition-all hover:translate-x-1 cursor-pointer group flex items-start justify-between gap-2 ${
+                    alt.id.includes('demo') ? 'border-2 border-rose-400/60 bg-rose-50/20' : ''
+                  }`}
                 >
                   <div className="space-y-0.5 overflow-hidden">
                     <div className="flex items-center gap-1.5">
@@ -3135,6 +3184,12 @@ export default function OwnerDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Interactive Demo Video Incident Report & Alert Modal */}
+      <DemoReportAlertModal 
+        isOpen={showDemoReportModal} 
+        onClose={() => setShowDemoReportModal(false)} 
+      />
     </div>
   )
 }
