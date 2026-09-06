@@ -381,8 +381,8 @@ function WeekRevenueStandingGraph({
 }
 
 // ════════════════════════════════════════════════════════════════
-// 7-Day Stress Trend Multi-Layered Wave Mountain Graph ("Crazy Graph")
-// Matches UI Theme (Neon Lime & Cyan in Dark Mode / Ocean Blue in Light Mode)
+// 7-Day Stress Trend Multi-Layered Wave Mountain Graph
+// Matches UI Blue Theme (Royal Blue & Electric Sky Blue)
 // Easy and simple to understand: 7 clear days with glowing circular nodes
 // ════════════════════════════════════════════════════════════════
 interface StressTrendWaveGraphProps {
@@ -397,7 +397,6 @@ function StressTrendWaveGraph({
   className = '',
 }: StressTrendWaveGraphProps) {
   // 7 Days of the week (Mon to Sun)
-  // Clean, intuitive data points that are instantly understandable:
   const days = [
     { label: 'Mon 09', val: 38, isToday: false },
     { label: 'Tue 10', val: 78, isToday: false },
@@ -408,10 +407,8 @@ function StressTrendWaveGraph({
     { label: 'Sun 15', val: currentStress, isToday: true }, // Live Today!
   ]
 
-  // Column width for 7 days across 280 viewBox
   const colW = 40
   // Baseline is at y = 78, peak ceiling at y = 14
-  // y = 78 - (val / 100) * 62
   const nodes = days.map((d, i) => {
     const x = 20 + i * colW
     const y = Math.max(12, Math.min(74, Math.round(78 - (d.val / 100) * 62)))
@@ -464,33 +461,21 @@ function StressTrendWaveGraph({
           preserveAspectRatio="none"
         >
           <defs>
-            {/* Dark Mode: Neon Lime to Cyan Gradients */}
-            <linearGradient id="cyberWaveTop" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#c6ff00" stopOpacity="0.6" />
-              <stop offset="45%" stopColor="#00f5d4" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#0077b6" stopOpacity="0.05" />
+            {/* UI Blue Gradients */}
+            <linearGradient id="uiBlueWaveTop" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2563eb" stopOpacity={isCyberpunk ? "0.75" : "0.55"} />
+              <stop offset="50%" stopColor="#3b82f6" stopOpacity={isCyberpunk ? "0.45" : "0.3"} />
+              <stop offset="100%" stopColor="#1e40af" stopOpacity="0.05" />
             </linearGradient>
 
-            <linearGradient id="cyberWaveMid" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#00f5d4" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#0077b6" stopOpacity="0.08" />
+            <linearGradient id="uiBlueWaveMid" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity={isCyberpunk ? "0.45" : "0.35"} />
+              <stop offset="100%" stopColor="#0284c7" stopOpacity="0.08" />
             </linearGradient>
 
-            {/* Light Mode: Royal Blue to Sky Cyan Gradients */}
-            <linearGradient id="lightWaveTop" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2563eb" stopOpacity="0.45" />
-              <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
-            </linearGradient>
-
-            <linearGradient id="lightWaveMid" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#93c5fd" stopOpacity="0.05" />
-            </linearGradient>
-
-            {/* Neon Glow Filter */}
-            <filter id="waveNeonGlow" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor={isCyberpunk ? "#c6ff00" : "#2563eb"} floodOpacity="0.8" />
+            {/* UI Blue Glow Filter */}
+            <filter id="uiBlueGlow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#38bdf8" floodOpacity="0.85" />
             </filter>
           </defs>
 
@@ -504,38 +489,39 @@ function StressTrendWaveGraph({
               height={78}
               fill={
                 isCyberpunk
-                  ? (d.isToday ? 'rgba(198, 255, 0, 0.08)' : (i % 2 === 0 ? 'rgba(0, 245, 212, 0.03)' : 'rgba(0, 245, 212, 0.07)'))
-                  : (d.isToday ? 'rgba(37, 99, 235, 0.08)' : (i % 2 === 0 ? 'rgba(241, 245, 249, 0.5)' : 'rgba(226, 232, 240, 0.6)'))
+                  ? (d.isToday ? 'rgba(56, 189, 248, 0.12)' : (i % 2 === 0 ? 'rgba(37, 99, 235, 0.04)' : 'rgba(37, 99, 235, 0.08)'))
+                  : (d.isToday ? 'rgba(37, 99, 235, 0.1)' : (i % 2 === 0 ? 'rgba(241, 245, 249, 0.5)' : 'rgba(226, 232, 240, 0.6)'))
               }
-              stroke={isCyberpunk ? (d.isToday ? 'rgba(198, 255, 0, 0.3)' : 'rgba(0, 245, 212, 0.1)') : 'rgba(203, 213, 225, 0.4)'}
+              stroke={isCyberpunk ? (d.isToday ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.15)') : 'rgba(203, 213, 225, 0.4)'}
               strokeWidth="0.5"
             />
           ))}
 
-          {/* 2. Secondary Wave Layer */}
+          {/* 2. Secondary Wave Layer (Sky Cyan / Blue) */}
           <path
             d={midWavePath}
-            fill={isCyberpunk ? 'url(#cyberWaveMid)' : 'url(#lightWaveMid)'}
+            fill="url(#uiBlueWaveMid)"
           />
 
-          {/* 3. Primary Wave Mountain Layer */}
+          {/* 3. Primary Wave Mountain Layer (Royal Blue) */}
           <path
             d={topWavePath}
-            fill={isCyberpunk ? 'url(#cyberWaveTop)' : 'url(#lightWaveTop)'}
+            fill="url(#uiBlueWaveTop)"
           />
 
-          {/* Glowing Ridge Line */}
+          {/* Glowing UI Blue Ridge Line */}
           <path
             d={topStrokePath}
             fill="none"
-            stroke={isCyberpunk ? '#c6ff00' : '#2563eb'}
-            strokeWidth="2.2"
-            filter="url(#waveNeonGlow)"
+            stroke={isCyberpunk ? '#38bdf8' : '#2563eb'}
+            strokeWidth="2.4"
+            filter="url(#uiBlueGlow)"
           />
 
           {/* 4. Circular Milestone Node Rings on the 7 Days */}
           {nodes.map((n, idx) => (
             <g key={idx} className="cursor-pointer">
+              <title>{`${n.label}: ${n.val}% Stress`}</title>
               {/* Pulsing Beacon Ring on Today */}
               {n.isToday && (
                 <circle 
@@ -543,10 +529,10 @@ function StressTrendWaveGraph({
                   cy={n.y} 
                   r="6.5" 
                   fill="none" 
-                  stroke={isCyberpunk ? '#c6ff00' : '#2563eb'} 
+                  stroke="#38bdf8" 
                   strokeWidth="1.5" 
                   className="animate-ping origin-center" 
-                  opacity="0.8" 
+                  opacity="0.85" 
                 />
               )}
               {/* Outer Ring */}
@@ -555,12 +541,10 @@ function StressTrendWaveGraph({
                 cy={n.y} 
                 r={n.isToday ? 4.5 : 3.5} 
                 fill="#ffffff" 
-                stroke={isCyberpunk ? (n.isToday ? '#c6ff00' : '#00f5d4') : '#2563eb'} 
+                stroke={n.isToday ? '#38bdf8' : '#2563eb'} 
                 strokeWidth={n.isToday ? 2 : 1.5} 
                 style={{ 
-                  filter: isCyberpunk 
-                    ? 'drop-shadow(0 0 4px rgba(198,255,0,0.9))' 
-                    : 'drop-shadow(0 0 3px rgba(37,99,235,0.4))' 
+                  filter: 'drop-shadow(0 0 4px rgba(56, 189, 248, 0.9))' 
                 }} 
               />
               {/* Center Dot */}
@@ -568,7 +552,7 @@ function StressTrendWaveGraph({
                 cx={n.x} 
                 cy={n.y} 
                 r={n.isToday ? 2 : 1.5} 
-                fill={isCyberpunk ? (n.isToday ? '#c6ff00' : '#00f5d4') : '#2563eb'} 
+                fill={n.isToday ? '#38bdf8' : '#2563eb'} 
               />
             </g>
           ))}
@@ -579,7 +563,7 @@ function StressTrendWaveGraph({
             y1="78" 
             x2="280" 
             y2="78" 
-            stroke={isCyberpunk ? 'rgba(198, 255, 0, 0.3)' : 'rgba(203, 213, 225, 0.8)'} 
+            stroke={isCyberpunk ? 'rgba(56, 189, 248, 0.35)' : 'rgba(203, 213, 225, 0.8)'} 
             strokeWidth="1" 
           />
         </svg>
@@ -592,7 +576,7 @@ function StressTrendWaveGraph({
             key={i} 
             className={`w-[36px] text-center leading-none ${
               d.isToday 
-                ? (isCyberpunk ? 'text-[#c6ff00] font-black' : 'text-blue-700 font-black') 
+                ? (isCyberpunk ? 'text-[#38bdf8] font-black' : 'text-blue-700 font-black') 
                 : (isCyberpunk ? 'text-slate-400' : 'text-slate-500')
             }`}
           >
@@ -2588,7 +2572,7 @@ export default function OwnerDashboardPage() {
                 7-DAY STRESS TREND
               </span>
             </div>
-            <span className={`px-1.5 py-0.2 rounded-full font-bold ${isCyberpunk ? 'border border-[#c6ff00]/40 font-cyber text-[9px] bg-[#121822] text-[#c6ff00]' : 'text-[9px] bg-purple-100 text-purple-800'}`}>
+            <span className={`px-1.5 py-0.2 rounded-full font-bold ${isCyberpunk ? 'border border-[#38bdf8]/40 font-cyber text-[9px] bg-[#121822] text-[#38bdf8]' : 'text-[9px] bg-blue-50 text-blue-700 border border-blue-200/60'}`}>
               Current: {currentStress}
             </span>
           </div>
