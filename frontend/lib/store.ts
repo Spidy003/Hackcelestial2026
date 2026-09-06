@@ -120,10 +120,10 @@ interface ResortStore {
 }
 
 const DEFAULT_KPIS: KPIs = {
-  occupancy_pct: 85.7, occupied_rooms: 72, staff_on_duty: 28,
-  open_tasks: 6, sla_breaches: 0, decisions_today: 14,
-  rupees_protected: 128500, guests_at_risk: 1, food_waste_pct: 4.2,
-  reviews_prevented: 3,
+  occupancy_pct: 0, occupied_rooms: 0, staff_on_duty: 0,
+  open_tasks: 0, sla_breaches: 0, decisions_today: 0,
+  rupees_protected: 0, guests_at_risk: 0, food_waste_pct: 0,
+  reviews_prevented: 0,
 }
 
 const DEFAULT_CLOCK: ClockState = {

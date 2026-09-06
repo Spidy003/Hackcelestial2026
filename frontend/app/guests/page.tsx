@@ -1722,13 +1722,16 @@ export default function GuestsExperiencePage() {
 
                 {activeInHouse.length > 0 && (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const allIds = fullRoster.map(g => String(g.id))
                       localStorage.setItem('resort_checked_out_guests', JSON.stringify(allIds))
                       setCheckedOutIds(new Set(allIds))
                       window.dispatchEvent(new Event('resort-guest-checkout'))
                       window.dispatchEvent(new Event('storage'))
                       setCheckoutMsg(`✓ All ${fullRoster.length} guests checked out! All rooms marked Vacant Dirty • Housekeeping turnaround dispatched.`)
+                      try {
+                        await fetch(`${API_URL}/api/guests/checkout-all`, { method: 'POST' })
+                      } catch (e) {}
                     }}
                     className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-all cursor-pointer"
                   >
@@ -1738,12 +1741,15 @@ export default function GuestsExperiencePage() {
 
                 {checkedOutList.length > 0 && (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       localStorage.removeItem('resort_checked_out_guests')
                       setCheckedOutIds(new Set())
                       window.dispatchEvent(new Event('resort-guest-checkout'))
                       window.dispatchEvent(new Event('storage'))
                       setCheckoutMsg(`✓ All guests re-admitted to active in-house roster!`)
+                      try {
+                        await fetch(`${API_URL}/api/guests/reset-roster`, { method: 'POST' })
+                      } catch (e) {}
                     }}
                     className="px-3 py-1 rounded-full text-xs font-bold bg-slate-900 hover:bg-black text-white transition-all cursor-pointer"
                   >

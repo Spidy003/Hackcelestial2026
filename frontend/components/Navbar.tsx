@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { useResortStore } from '@/lib/store'
+import { useLiveMetrics } from '@/lib/useLiveMetrics'
 import { formatSimTime, formatRupees } from '@/lib/format'
 import { API_URL } from '@/lib/api'
 import { 
@@ -28,6 +29,7 @@ const navItems = [
 export default function Navbar() {
   const pathname = usePathname()
   const { clock, kpis, connectionStatus, setClock } = useResortStore()
+  const metrics = useLiveMetrics()
   const [speedLoading, setSpeedLoading] = useState(false)
 
   const togglePause = async () => {
@@ -57,16 +59,23 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md shadow-2xl">
-      {/* Top Banner / Pulse Strip summary */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/50 text-xs">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-500 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-              <Layers className="w-4 h-4" />
+    <header className="sticky top-0 z-50 bg-[#060a0d]/95 backdrop-blur border-b border-slate-800 shadow-2xl">
+      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+        {/* Logo & Brand */}
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#00ff66] shadow-[0_0_8px_rgba(0,255,102,0.4)] flex items-center justify-center bg-[#0a1014] p-0.5">
+              <img 
+                src="/resorva_logo.png" 
+                alt="Resorva" 
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none'
+                }}
+              />
             </div>
-            <div>
-              <span className="font-extrabold tracking-wider text-slate-100 uppercase text-sm font-mono">
+            <div className="flex items-center">
+              <span className="font-bold text-white tracking-wider group-hover:text-[#00ff66] transition-colors">
                 ResortierAi
               </span>
               <span className="hidden sm:inline-block ml-2 px-1.5 py-0.5 text-[10px] uppercase font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 rounded">
@@ -79,17 +88,17 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-3 pl-4 border-l border-slate-800 font-mono text-[11px]">
             <div className="flex items-center gap-1.5">
               <span className="text-slate-400">Occupancy:</span>
-              <span className="font-semibold text-emerald-300">{(kpis?.occupancy_pct ?? 78.5).toFixed(1)}%</span>
+              <span className="font-semibold text-emerald-300">{metrics.occupancyPct.toFixed(1)}%</span>
             </div>
             <div className="w-1 h-1 rounded-full bg-slate-700" />
             <div className="flex items-center gap-1.5">
               <span className="text-slate-400">Protected:</span>
-              <span className="font-semibold text-cyan-300">{formatRupees(kpis?.rupees_protected ?? 342000, true)}</span>
+              <span className="font-semibold text-cyan-300">{formatRupees(metrics.rupeesProtected, true)}</span>
             </div>
             <div className="w-1 h-1 rounded-full bg-slate-700" />
             <div className="flex items-center gap-1.5">
               <span className="text-slate-400">Decisions:</span>
-              <span className="font-semibold text-amber-300">{kpis?.decisions_today ?? 48}</span>
+              <span className="font-semibold text-amber-300">{metrics.decisionsToday}</span>
             </div>
           </div>
         </div>

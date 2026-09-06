@@ -1,31 +1,31 @@
 'use client'
 
-import { useResortStore } from '@/lib/store'
+import { useLiveMetrics } from '@/lib/useLiveMetrics'
 import { formatRupees } from '@/lib/format'
 import { Card } from './ui/8bit/card'
 import { Badge } from './ui/8bit/badge'
 import { BedDouble, Users, AlertCircle, ShieldCheck, TrendingUp, Sparkles, UtensilsCrossed } from 'lucide-react'
 
 export default function PulseStrip() {
-  const { kpis } = useResortStore()
+  const metrics = useLiveMetrics()
 
-  const occ = kpis?.occupancy_pct ?? 78.5
-  const staff = kpis?.staff_on_duty ?? 34
-  const openTasks = kpis?.open_tasks ?? 8
-  const breaches = kpis?.sla_breaches ?? 0
-  const decisions = kpis?.decisions_today ?? 48
-  const protectedInr = kpis?.rupees_protected ?? 342000
-  const atRisk = kpis?.guests_at_risk ?? 2
-  const foodWaste = kpis?.food_waste_pct ?? 4.2
+  const occ = metrics.occupancyPct
+  const staff = metrics.staffOnDuty
+  const openTasks = metrics.openTasks
+  const breaches = metrics.slaBreaches
+  const decisions = metrics.decisionsToday
+  const protectedInr = metrics.rupeesProtected
+  const atRisk = metrics.guestsAtRisk
+  const foodWaste = metrics.foodWastePct
 
   const stats = [
     {
       label: 'OCCUPANCY',
       value: `${occ.toFixed(1)}%`,
-      sub: `${kpis?.occupied_rooms ?? 66}/84 Rooms`,
+      sub: `${metrics.occupiedRooms}/84 Rooms`,
       icon: BedDouble,
-      variant: 'green' as const,
-      color: 'text-[#00ff66]',
+      variant: occ > 0 ? ('green' as const) : ('amber' as const),
+      color: occ > 0 ? 'text-[#00ff66]' : 'text-[#ffb703]',
     },
     {
       label: 'STAFF ON DUTY',

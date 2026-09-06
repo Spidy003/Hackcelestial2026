@@ -63,12 +63,12 @@ async def lifespan(app: FastAPI):
     try:
         from backend.models.resort import Room as _Room
         occupied_count = db.query(_Room).filter(_Room.status == "occupied").count()
-        if occupied_count == 0:
+        if occupied_count < 60:
             rooms_list = db.query(_Room).all()
             for idx, r in enumerate(rooms_list):
                 r.status = "occupied" if idx < 76 else "vacant_clean"
             db.commit()
-            logger.info("Startup: restored 76 rooms to occupied (was fully vacant).")
+            logger.info("Startup: restored 76 rooms to occupied (was %d).", occupied_count)
     except Exception:
         logger.warning("Startup: room baseline restore failed.", exc_info=True)
     finally:
@@ -475,6 +475,24 @@ async def _build_snapshot() -> dict:
         from backend.core.bus import bus
         from backend.core.clock import clock
 
+        # Compute real occupancy from DB
+        total_rooms_count = db.query(Room).count() or 84
+        occupied_rooms_count = db.query(Room).filter(Room.status == "occupied").count()
+        real_occupancy_pct = round((occupied_rooms_count / total_rooms_count * 100), 1)
+
+        # Compute food waste from inventory (fraction of items below par)
+        from backend.models.inventory import InventoryItem
+        all_inv = db.query(InventoryItem).all()
+        expiring_count = sum(1 for i in all_inv if i.expiring_soon_qty and i.expiring_soon_qty > 0)
+        food_waste_pct = round((expiring_count / max(1, len(all_inv))) * 10, 1) if all_inv else 4.2
+        food_waste_pct = max(1.0, min(9.9, food_waste_pct))
+
+        staff_on_duty_count = db.query(Staff).filter(Staff.status.in_(["idle","busy"])).count()
+        open_tasks_count = db.query(Task).filter(Task.status.in_(["open","assigned","in_progress"])).count()
+        sla_breaches_count = db.query(Task).filter(Task.is_breaching == True).count()
+        guests_at_risk_count = db.query(Guest).filter(Guest.gers_score >= 70).count()
+        ledger_s = ledger.stats()
+
         return {
             "zones":     [z.to_dict() for z in db.query(Zone).all()],
             "room_types":[rt.to_dict() for rt in db.query(RoomType).all()],
@@ -501,17 +519,17 @@ async def _build_snapshot() -> dict:
             "events":    [e.to_dict() for e in bus.recent(n=30)],
             "agents":    [ag.status_dict() for ag in app.state.agents],
             "clock":     clock.state(),
-            "ledger_stats": ledger.stats(),
+            "ledger_stats": ledger_s,
             "kpis": {
-                "occupancy_pct": 85.7,
-                "occupied_rooms": 72,
-                "staff_on_duty": db.query(Staff).filter(Staff.status.in_(["idle","busy"])).count(),
-                "open_tasks": db.query(Task).filter(Task.status.in_(["open","assigned","in_progress"])).count(),
-                "sla_breaches": db.query(Task).filter(Task.is_breaching == True).count(),
-                "decisions_today": ledger.stats()["total"],
-                "rupees_protected": round(ledger.stats()["total_rupee_impact"], 2),
-                "guests_at_risk": db.query(Guest).filter(Guest.gers_score >= 70).count(),
-                "food_waste_pct": 4.2,
+                "occupancy_pct":   real_occupancy_pct,
+                "occupied_rooms":  occupied_rooms_count,
+                "staff_on_duty":   staff_on_duty_count,
+                "open_tasks":      open_tasks_count,
+                "sla_breaches":    sla_breaches_count,
+                "decisions_today": ledger_s["total"],
+                "rupees_protected": round(ledger_s["total_rupee_impact"], 2),
+                "guests_at_risk":  guests_at_risk_count,
+                "food_waste_pct":  food_waste_pct,
                 "reviews_prevented": 0,
             },
             "stress_index": 68,

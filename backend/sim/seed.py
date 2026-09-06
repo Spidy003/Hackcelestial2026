@@ -334,7 +334,7 @@ def seed_all(db: Session) -> None:
                 floor=zone.floor,
                 zone_id=zone.id,
                 type_id=rtype.id,
-                status=rng.choice(["vacant_clean"] * 4 + ["occupied"] * 5 + ["vacant_dirty"]),
+                status="occupied" if len(rooms) < 76 else "vacant_clean",
                 view="sea" if rtype.name in ("Sea View","Suite","Villa","Presidential") else "garden",
                 last_cleaned_at=datetime.utcnow() - timedelta(hours=rng.randint(0, 8)),
             )
