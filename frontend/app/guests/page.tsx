@@ -1722,15 +1722,13 @@ export default function GuestsExperiencePage() {
 
                 {activeInHouse.length > 0 && (
                   <button
-                    onClick={async () => {
-                      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-                      fetch(`${apiBase}/api/guests/checkout-all`, { method: 'POST' }).catch(() => {})
+                    onClick={() => {
                       const allIds = fullRoster.map(g => String(g.id))
                       localStorage.setItem('resort_checked_out_guests', JSON.stringify(allIds))
                       setCheckedOutIds(new Set(allIds))
                       window.dispatchEvent(new Event('resort-guest-checkout'))
                       window.dispatchEvent(new Event('storage'))
-                      setCheckoutMsg(`✓ All ${fullRoster.length} guests checked out! Occupancy updated to 0% across operations & owner dashboards.`)
+                      setCheckoutMsg(`✓ All ${fullRoster.length} guests checked out! All rooms marked Vacant Dirty • Housekeeping turnaround dispatched.`)
                     }}
                     className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-all cursor-pointer"
                   >
@@ -1740,14 +1738,12 @@ export default function GuestsExperiencePage() {
 
                 {checkedOutList.length > 0 && (
                   <button
-                    onClick={async () => {
-                      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-                      fetch(`${apiBase}/api/guests/reset-roster`, { method: 'POST' }).catch(() => {})
+                    onClick={() => {
                       localStorage.removeItem('resort_checked_out_guests')
                       setCheckedOutIds(new Set())
                       window.dispatchEvent(new Event('resort-guest-checkout'))
                       window.dispatchEvent(new Event('storage'))
-                      setCheckoutMsg(`✓ All guests re-admitted to active in-house roster! Occupancy restored across dashboards.`)
+                      setCheckoutMsg(`✓ All guests re-admitted to active in-house roster!`)
                     }}
                     className="px-3 py-1 rounded-full text-xs font-bold bg-slate-900 hover:bg-black text-white transition-all cursor-pointer"
                   >

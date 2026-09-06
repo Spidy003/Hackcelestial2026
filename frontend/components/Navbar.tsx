@@ -98,8 +98,8 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {/* Clock controls */}
           <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg shadow-inner">
-            <span className="text-[11px] font-mono text-slate-300 font-medium" suppressHydrationWarning>
-              {formatSimTime(clock?.sim_now || '2026-01-01T00:00:00.000Z', true)}
+            <span className="text-[11px] font-mono text-slate-300 font-medium">
+              {formatSimTime(clock?.sim_now || new Date().toISOString(), true)}
             </span>
 
             <button
