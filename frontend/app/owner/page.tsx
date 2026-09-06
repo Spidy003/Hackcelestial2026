@@ -11,7 +11,8 @@ import {
   ArrowUpRight, ArrowDownRight, Clock, FileText, 
   Check, X, Sparkles, Zap, Bell, ShieldAlert,
   Flame, Building2, Users, UserCheck, Package, ShoppingCart,
-  Plus, Minus, RefreshCw, Layers, Eye, ArrowLeft
+  Plus, Minus, RefreshCw, Layers, Eye, ArrowLeft,
+  Compass, MapPin
 } from 'lucide-react'
 import { useOwnerTheme } from '@/lib/owner-theme'
 import Retro8BitcnWidget from '@/components/Retro8BitcnWidget'
@@ -188,6 +189,418 @@ const INITIAL_RESTOCK_ITEMS: RestockItem[] = [
     daysOfCover: 3.5,
   }
 ]
+
+// ════════════════════════════════════════════════════════════════
+// Single Thick & Big Standing Graph Component (Real-Time Live Status)
+// Shows current status for Occupancy, Staff Load, Guest Wait as a single bold standing pillar
+// Features 5 tight standing vertical stripes with neon cyan-to-lime glow
+// ════════════════════════════════════════════════════════════════
+interface SingleStandingBarProps {
+  value: number
+  max?: number
+  min?: number
+  isCyberpunk?: boolean
+  height?: number
+  width?: number
+  unit?: string
+  className?: string
+}
+
+function SingleStandingBar({
+  value,
+  max = 100,
+  min = 0,
+  isCyberpunk = true,
+  height = 54,
+  width = 34,
+  unit = '%',
+  className = '',
+}: SingleStandingBarProps) {
+  const range = max - min || 1
+  const pct = Math.max(5, Math.min(100, Math.round(((value - min) / range) * 100)))
+
+  return (
+    <div className={`flex flex-col items-center justify-end select-none shrink-0 ${className}`}>
+      {/* Outer Pillar Frame with Track */}
+      <div 
+        className={`relative flex items-end justify-center rounded-sm overflow-hidden p-[2px] ${
+          isCyberpunk 
+            ? 'bg-[#06090e] border border-[#c6ff00]/30 shadow-[inset_0_0_10px_rgba(0,0,0,0.9)]' 
+            : 'bg-slate-100 border border-slate-300 shadow-inner'
+        }`}
+        style={{ height: `${height}px`, width: `${width}px` }}
+        title={`Current Status: ${value}${unit} (${pct}%)`}
+      >
+        {/* Subtle background track lines indicating full height capacity */}
+        <div className="absolute inset-0 flex items-end justify-between gap-[2px] px-[2px] opacity-15 pointer-events-none">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className={`flex-1 h-full rounded-t-xs ${isCyberpunk ? 'bg-[#c6ff00]' : 'bg-blue-400'}`} />
+          ))}
+        </div>
+
+        {/* The Single Thick Standing Pillar that rises/falls in real-time to current status */}
+        <div 
+          className="relative z-10 w-full flex items-end justify-between gap-[2px] transition-all duration-500 ease-out"
+          style={{ height: `${pct}%` }}
+        >
+          {[0, 1, 2, 3, 4].map((barIdx) => (
+            <div
+              key={barIdx}
+              className="flex-1 h-full rounded-t-xs"
+              style={{
+                background: isCyberpunk
+                  ? 'linear-gradient(0deg, #0077b6 0%, #00f5d4 35%, #70e000 70%, #c6ff00 100%)'
+                  : 'linear-gradient(0deg, #1e40af 0%, #3b82f6 45%, #60a5fa 100%)',
+                boxShadow: isCyberpunk
+                  ? '0 0 10px rgba(198,255,0,0.85), 0 0 4px rgba(0,245,212,0.9)'
+                  : '0 0 4px rgba(59,130,246,0.6)',
+              }}
+            />
+          ))}
+        </div>
+        
+        {/* Luminous Top Cap Line */}
+        <div 
+          className="absolute left-0 right-0 z-20 pointer-events-none transition-all duration-500 ease-out"
+          style={{ 
+            bottom: `calc(${pct}% - 1.5px)`,
+            height: '3px',
+            background: isCyberpunk ? '#c6ff00' : '#3b82f6',
+            boxShadow: isCyberpunk ? '0 0 10px #c6ff00, 0 0 5px #00f5d4' : '0 0 5px #2563eb',
+            opacity: pct > 4 ? 1 : 0
+          }}
+        />
+      </div>
+
+      {/* Mini live status label */}
+      <span className={`mt-1 text-[8px] font-mono font-bold leading-none ${
+        isCyberpunk ? 'text-[#c6ff00]' : 'text-blue-700'
+      }`}>
+        {value}{unit}
+      </span>
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════
+// Entire Week Revenue Standing Graph Component (Big & Thick)
+// 7 days (Mon-Sun), each day represented with bold vertical standing bars
+// Today updates dynamically in real-time with revenueToday
+// ════════════════════════════════════════════════════════════════
+interface WeekRevenueStandingGraphProps {
+  todayRevenue: number
+  isCyberpunk?: boolean
+  height?: number
+  className?: string
+}
+
+function WeekRevenueStandingGraph({
+  todayRevenue,
+  isCyberpunk = true,
+  height = 54,
+  className = '',
+}: WeekRevenueStandingGraphProps) {
+  const maxCap = 2000000 // ₹20L max scale
+  const days = [
+    { label: 'M', value: 1180000, profile: [0.6, 0.68] },
+    { label: 'T', value: 1250000, profile: [0.65, 0.72] },
+    { label: 'W', value: 1390000, profile: [0.7, 0.78] },
+    { label: 'T', value: 1320000, profile: [0.66, 0.74] },
+    { label: 'F', value: 1680000, profile: [0.82, 0.9] },
+    { label: 'S', value: 1850000, profile: [0.88, 0.98] },
+    { label: 'S', value: todayRevenue, profile: [0.92, 1.0], isToday: true },
+  ]
+
+  return (
+    <div className={`flex flex-col items-end select-none shrink-0 ${className}`}>
+      {/* 7-day Standing Bars */}
+      <div 
+        className={`flex items-end gap-[4px] p-1 rounded-sm ${
+          isCyberpunk 
+            ? 'bg-[#06090e] border border-[#c6ff00]/30 shadow-[inset_0_0_10px_rgba(0,0,0,0.9)]' 
+            : 'bg-slate-100 border border-slate-300 shadow-inner'
+        }`}
+        style={{ height: `${height}px` }}
+      >
+        {days.map((day, dIdx) => {
+          const ratio = Math.max(0.18, Math.min(1.0, day.value / maxCap))
+          return (
+            <div 
+              key={dIdx} 
+              className="flex items-end gap-[2px] h-full" 
+              title={`${day.label}: ₹${(day.value / 100000).toFixed(1)}L ${day.isToday ? '(Today Live)' : ''}`}
+            >
+              {day.profile.map((p, bIdx) => {
+                const barHeight = Math.max(12, Math.min(100, Math.round(p * ratio * 100)))
+                return (
+                  <div
+                    key={bIdx}
+                    className="shrink-0 transition-all duration-500 ease-out"
+                    style={{
+                      height: `${barHeight}%`,
+                      width: '4px',
+                      borderRadius: '2px 2px 0 0',
+                      background: isCyberpunk
+                        ? (day.isToday
+                            ? 'linear-gradient(0deg, #0077b6 0%, #00f5d4 30%, #70e000 65%, #c6ff00 100%)'
+                            : 'linear-gradient(0deg, #005f73 0%, #0a9396 35%, #94d2bd 75%, #aacc00 100%)')
+                        : (day.isToday
+                            ? 'linear-gradient(0deg, #1e40af 0%, #3b82f6 45%, #60a5fa 100%)'
+                            : 'linear-gradient(0deg, #64748b 0%, #94a3b8 50%, #cbd5e1 100%)'),
+                      boxShadow: isCyberpunk
+                        ? (day.isToday
+                            ? '0 0 10px rgba(198,255,0,0.9), 0 0 4px rgba(0,245,212,0.95)'
+                            : '0 0 4px rgba(170,204,0,0.5)')
+                        : '0 0 3px rgba(59,130,246,0.4)',
+                    }}
+                  />
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* 7-Day Labels M T W T F S S */}
+      <div className="flex items-center gap-[4px] px-1 mt-1 pt-0.5 border-t border-[#c6ff00]/20 w-full justify-between">
+        {days.map((day, dIdx) => (
+          <span 
+            key={dIdx} 
+            className={`w-[10px] text-center text-[8px] font-mono leading-none ${
+              day.isToday 
+                ? (isCyberpunk ? 'text-[#c6ff00] font-black' : 'text-blue-700 font-bold') 
+                : (isCyberpunk ? 'text-slate-400' : 'text-slate-600')
+            }`}
+          >
+            {day.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════
+// 7-Day Stress Trend Multi-Layered Wave Mountain Graph ("Crazy Graph")
+// Matches purple/violet multi-wave layered style with vertical column bands and glowing circular node rings
+// ════════════════════════════════════════════════════════════════
+interface StressTrendWaveGraphProps {
+  currentStress: number
+  isCyberpunk?: boolean
+  className?: string
+}
+
+function StressTrendWaveGraph({
+  currentStress,
+  isCyberpunk = true,
+  className = '',
+}: StressTrendWaveGraphProps) {
+  // 15 vertical column bands across width
+  const columnCount = 15
+  const columnWidth = 300 / columnCount
+
+  // Summit peak scales dynamically with currentStress
+  const summitY = Math.max(4, Math.min(16, 20 - Math.round((currentStress / 100) * 16)))
+
+  return (
+    <div className={`w-full flex flex-col justify-between select-none ${className}`}>
+      <div className="relative w-full h-20 sm:h-22 overflow-hidden rounded-sm">
+        <svg 
+          className="w-full h-full" 
+          viewBox="0 0 300 100" 
+          preserveAspectRatio="none"
+        >
+          <defs>
+            {/* Layer 1 (Top Wave) Gradient */}
+            <linearGradient id="purpleTopWaveGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#7e22ce" stopOpacity="0.95" />
+              <stop offset="50%" stopColor="#6b21a8" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.75" />
+            </linearGradient>
+
+            {/* Layer 2 (Middle Wave) Gradient */}
+            <linearGradient id="purpleMidWaveGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#a855f7" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="#7e22ce" stopOpacity="0.45" />
+            </linearGradient>
+
+            {/* Layer 3 (Bottom Wave) Gradient */}
+            <linearGradient id="purpleBottomWaveGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#c084fc" stopOpacity="0.55" />
+              <stop offset="100%" stopColor="#a855f7" stopOpacity="0.25" />
+            </linearGradient>
+
+            {/* Top Ridge Glow Filter */}
+            <filter id="purpleGlow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#c084fc" floodOpacity="0.8" />
+            </filter>
+          </defs>
+
+          {/* 1. Alternating Vertical Column Bands */}
+          {Array.from({ length: columnCount }).map((_, i) => (
+            <rect
+              key={i}
+              x={i * columnWidth}
+              y={0}
+              width={columnWidth}
+              height={96}
+              fill={i % 2 === 0 ? 'rgba(147, 51, 234, 0.05)' : 'rgba(147, 51, 234, 0.16)'}
+              stroke="rgba(192, 132, 252, 0.08)"
+              strokeWidth="0.5"
+            />
+          ))}
+
+          {/* 2. Layer 3: Bottom Lavender Wave */}
+          <path
+            d="M 0,96 L 0,82 C 15,80 25,66 40,66 C 60,66 70,76 85,76 C 105,76 120,62 138,62 C 155,62 165,74 180,74 C 195,74 210,64 225,64 C 240,64 255,74 270,74 C 285,74 295,84 300,88 L 300,96 Z"
+            fill="url(#purpleBottomWaveGrad)"
+          />
+
+          {/* 3. Layer 2: Middle Violet Wave */}
+          <path
+            d="M 0,96 L 0,60 C 15,56 26,44 42,44 C 58,44 70,54 88,54 C 106,54 118,38 136,38 C 154,38 165,52 182,52 C 198,52 210,40 228,40 C 244,40 258,54 274,54 C 288,54 296,66 300,70 L 300,96 Z"
+            fill="url(#purpleMidWaveGrad)"
+          />
+
+          {/* 4. Layer 1: Top Deep Purple Dramatic "Crazy" Wave */}
+          <path
+            d={`M 0,96 L 0,42 
+               C 8,32 14,24 24,24 
+               C 34,24 40,36 48,36 
+               C 58,36 68,14 80,14 
+               C 92,14 100,32 110,32 
+               C 122,32 130,22 142,22 
+               C 152,22 162,38 172,38 
+               C 178,38 182,${summitY} 190,${summitY} 
+               C 198,${summitY} 204,30 214,30 
+               C 224,30 234,16 244,16 
+               C 254,16 262,40 272,40 
+               C 280,40 286,34 292,34 
+               C 296,34 298,55 300,60 
+               L 300,96 Z`}
+            fill="url(#purpleTopWaveGrad)"
+          />
+
+          {/* Glowing Top Ridge Stroke */}
+          <path
+            d={`M 0,42 
+               C 8,32 14,24 24,24 
+               C 34,24 40,36 48,36 
+               C 58,36 68,14 80,14 
+               C 92,14 100,32 110,32 
+               C 122,32 130,22 142,22 
+               C 152,22 162,38 172,38 
+               C 178,38 182,${summitY} 190,${summitY} 
+               C 198,${summitY} 204,30 214,30 
+               C 224,30 234,16 244,16 
+               C 254,16 262,40 272,40 
+               C 280,40 286,34 292,34 
+               C 296,34 298,55 300,60`}
+            fill="none"
+            stroke="#d8b4fe"
+            strokeWidth="2.5"
+            filter="url(#purpleGlow)"
+          />
+
+          {/* 5. Circular Nodes (White ring with purple center) */}
+          {/* Layer 3 Nodes */}
+          {[
+            { x: 40, y: 66 },
+            { x: 138, y: 62 },
+            { x: 225, y: 64 },
+          ].map((n, idx) => (
+            <g key={`l3-${idx}`}>
+              <circle cx={n.x} cy={n.y} r="3" fill="#ffffff" stroke="#7e22ce" strokeWidth="1" opacity="0.85" />
+              <circle cx={n.x} cy={n.y} r="1" fill="#a855f7" />
+            </g>
+          ))}
+
+          {/* Layer 2 Nodes */}
+          {[
+            { x: 42, y: 44 },
+            { x: 88, y: 54 },
+            { x: 136, y: 38 },
+            { x: 182, y: 52 },
+            { x: 228, y: 40 },
+            { x: 274, y: 54 },
+          ].map((n, idx) => (
+            <g key={`l2-${idx}`}>
+              <circle cx={n.x} cy={n.y} r="3.2" fill="#ffffff" stroke="#6b21a8" strokeWidth="1.2" opacity="0.9" />
+              <circle cx={n.x} cy={n.y} r="1.2" fill="#7e22ce" />
+            </g>
+          ))}
+
+          {/* Layer 1 Nodes (Peaks and Inflections on Top Wave) */}
+          {[
+            { x: 24, y: 24 },
+            { x: 48, y: 36 },
+            { x: 80, y: 14 },
+            { x: 110, y: 32 },
+            { x: 142, y: 22 },
+            { x: 172, y: 38 },
+            { x: 190, y: summitY, isSummit: true },
+            { x: 214, y: 30 },
+            { x: 244, y: 16 },
+            { x: 272, y: 40 },
+            { x: 292, y: 34 },
+          ].map((n, idx) => (
+            <g key={`l1-${idx}`}>
+              {n.isSummit && (
+                <circle 
+                  cx={n.x} 
+                  cy={n.y} 
+                  r="6" 
+                  fill="none" 
+                  stroke="#c084fc" 
+                  strokeWidth="1.5" 
+                  className="animate-ping origin-center" 
+                  opacity="0.75" 
+                />
+              )}
+              <circle 
+                cx={n.x} 
+                cy={n.y} 
+                r={n.isSummit ? 4.5 : 3.5} 
+                fill="#ffffff" 
+                stroke="#581c87" 
+                strokeWidth="1.5" 
+                style={{ filter: 'drop-shadow(0 0 4px rgba(216,180,254,0.9))' }} 
+              />
+              <circle 
+                cx={n.x} 
+                cy={n.y} 
+                r={n.isSummit ? 2 : 1.5} 
+                fill={n.isSummit ? '#c084fc' : '#6b21a8'} 
+              />
+            </g>
+          ))}
+
+          {/* Baseline horizontal line */}
+          <line x1="0" y1="96" x2="300" y2="96" stroke="rgba(192,132,252,0.4)" strokeWidth="1" />
+        </svg>
+      </div>
+
+      {/* 15 Column Labels under graph */}
+      <div className="flex justify-between items-center px-1 mt-1 pt-0.5 border-t border-purple-500/20 text-[7.5px] font-mono font-bold text-purple-400">
+        <span>01</span>
+        <span>02</span>
+        <span>03</span>
+        <span>04</span>
+        <span>05</span>
+        <span>06</span>
+        <span>07</span>
+        <span>08</span>
+        <span>09</span>
+        <span>10</span>
+        <span>11</span>
+        <span>12</span>
+        <span>13</span>
+        <span>14</span>
+        <span>15</span>
+      </div>
+    </div>
+  )
+}
 
 export default function OwnerDashboardPage() {
   const { 
@@ -1464,68 +1877,78 @@ export default function OwnerDashboardPage() {
               </div>
             </div>
 
-            {/* Filter Buttons & Controls */}
-            <div className="flex items-center gap-2">
-              {/* Quick Restock List Button */}
+            {/* Filter Buttons & Controls (Uniform Dimensions) */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* 1. Quick Restock List Button */}
               <button
                 onClick={() => {
                   setOrderSubmitted(false)
                   setShowInventoryModal(true)
                 }}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer ${
+                className={`h-7 px-2.5 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 border whitespace-nowrap cursor-pointer shadow-xs ${
                   isCyberpunk
-                    ? 'bg-[#121822] text-[#c6ff00] border border-[#c6ff00]/40 hover:bg-[#c6ff00] hover:text-black font-cyber'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                    ? 'bg-[#121822] text-[#c6ff00] border-[#c6ff00]/40 hover:bg-[#c6ff00] hover:text-black font-cyber'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                 }`}
                 title="View Automated Restock List"
               >
-                <Package className={`w-2.5 h-2.5 ${isCyberpunk ? 'text-[#c6ff00]' : 'text-blue-600'}`} />
+                <Package className={`w-3 h-3 ${isCyberpunk ? 'text-[#c6ff00]' : 'text-blue-600'}`} />
                 <span>Restock List</span>
               </button>
 
+              {/* 2. Staff Toggle Button */}
               <button
                 onClick={() => setShowStaffOverlay(!showStaffOverlay)}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 border cursor-pointer ${
+                className={`h-7 px-2.5 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 border whitespace-nowrap cursor-pointer shadow-xs ${
                   isCyberpunk 
                     ? showStaffOverlay
                       ? 'bg-[#c6ff00] text-black border-[#c6ff00] font-cyber shadow-[0_0_10px_rgba(198,255,0,0.4)]'
-                      : 'bg-[#121822] text-slate-300 border-[#c6ff00]/30 font-cyber'
+                      : 'bg-[#121822] text-slate-300 border-[#c6ff00]/40 hover:border-[#c6ff00] font-cyber'
                     : showStaffOverlay 
                     ? 'bg-blue-600 text-white border-blue-600 shadow-xs' 
                     : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                 }`}
                 title="Toggle Real-Time Staff Count Badges on Pins"
               >
-                <Users className="w-2.5 h-2.5" />
+                <Users className="w-3 h-3" />
                 <span>Staff {showStaffOverlay ? 'ON' : 'OFF'}</span>
               </button>
 
-              <div className={`flex items-center p-0.5 rounded-lg text-[10px] font-semibold ${
-                isCyberpunk 
-                  ? 'bg-[#090d14] border border-[#c6ff00]/30 text-slate-300 font-cyber' 
-                  : 'bg-slate-100 text-slate-600'
-              }`}>
-                <button
-                  onClick={() => setPinFilter('key')}
-                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
-                    pinFilter === 'key' 
-                      ? isCyberpunk ? 'bg-[#c6ff00] text-black font-bold shadow-[0_0_8px_rgba(198,255,0,0.4)]' : 'bg-white text-blue-700 shadow-xs font-bold' 
-                      : isCyberpunk ? 'text-slate-400 hover:text-white' : 'hover:text-slate-900'
-                  }`}
-                >
-                  Key Hubs
-                </button>
-                <button
-                  onClick={() => setPinFilter('all')}
-                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
-                    pinFilter === 'all' 
-                      ? isCyberpunk ? 'bg-[#c6ff00] text-black font-bold shadow-[0_0_8px_rgba(198,255,0,0.4)]' : 'bg-white text-blue-700 shadow-xs font-bold' 
-                      : isCyberpunk ? 'text-slate-400 hover:text-white' : 'hover:text-slate-900'
-                  }`}
-                >
-                  All Points ({visualPins.length})
-                </button>
-              </div>
+              {/* 3. Key Hubs Filter Button */}
+              <button
+                onClick={() => setPinFilter('key')}
+                className={`h-7 px-2.5 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 border whitespace-nowrap cursor-pointer shadow-xs ${
+                  isCyberpunk 
+                    ? pinFilter === 'key' 
+                      ? 'bg-[#c6ff00] text-black border-[#c6ff00] font-bold shadow-[0_0_10px_rgba(198,255,0,0.4)] font-cyber' 
+                      : 'bg-[#121822] text-slate-300 border-[#c6ff00]/40 hover:border-[#c6ff00] font-cyber'
+                    : pinFilter === 'key' 
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-bold' 
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                }`}
+                title="Filter to Key Operational Hubs"
+              >
+                <Compass className="w-3 h-3" />
+                <span>Key Hubs</span>
+              </button>
+
+              {/* 4. All Points Filter Button */}
+              <button
+                onClick={() => setPinFilter('all')}
+                className={`h-7 px-2.5 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 border whitespace-nowrap cursor-pointer shadow-xs ${
+                  isCyberpunk 
+                    ? pinFilter === 'all' 
+                      ? 'bg-[#c6ff00] text-black border-[#c6ff00] font-bold shadow-[0_0_10px_rgba(198,255,0,0.4)] font-cyber' 
+                      : 'bg-[#121822] text-slate-300 border-[#c6ff00]/40 hover:border-[#c6ff00] font-cyber'
+                    : pinFilter === 'all' 
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-bold' 
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                }`}
+                title="Show All Spatial Points"
+              >
+                <MapPin className="w-3 h-3" />
+                <span>All Points ({visualPins.length})</span>
+              </button>
 
               <div className={`hidden sm:flex items-center gap-2.5 text-[10px] font-semibold pl-1 border-l ${isCyberpunk ? 'border-[#c6ff00]/30 text-slate-300 font-cyber' : 'border-slate-200 text-slate-600'}`}>
                 <span className="flex items-center gap-1">
@@ -1830,7 +2253,7 @@ export default function OwnerDashboardPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════
-          KPI ROW: 4 Cards (Value, Comparison vs Yesterday, Sparkline)
+          KPI ROW: 4 Cards (Value, Comparison vs Yesterday, Standing Graph)
           ══════════════════════════════════════════════════════════════ */}
       <section className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-2">
         {/* 1. OCCUPANCY */}
@@ -1846,28 +2269,13 @@ export default function OwnerDashboardPage() {
               <ArrowUpRight className="w-3 h-3" /> 6.2% vs yday
             </span>
           </div>
-          {isCyberpunk ? (
-            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-              <path
-                d="M 0,22 Q 15,10 30,18 T 70,5"
-                fill="none"
-                stroke="#c6ff00"
-                strokeWidth="2.5"
-                filter="drop-shadow(0 0 4px #c6ff00)"
-              />
-              <circle cx="70" cy="5" r="3.5" fill="#c6ff00" />
-            </svg>
-          ) : (
-            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-              <path
-                d="M 0,22 Q 15,10 30,18 T 70,5"
-                fill="none"
-                stroke="#2563eb"
-                strokeWidth="2.5"
-              />
-              <circle cx="70" cy="5" r="3.5" fill="#2563eb" />
-            </svg>
-          )}
+          <SingleStandingBar
+            value={occPct}
+            max={100}
+            min={0}
+            unit="%"
+            isCyberpunk={isCyberpunk}
+          />
         </div>
 
         {/* 2. STAFF LOAD */}
@@ -1883,28 +2291,13 @@ export default function OwnerDashboardPage() {
               {staffAvailable} available
             </span>
           </div>
-          {isCyberpunk ? (
-            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-              <path
-                d="M 0,10 Q 20,25 40,12 T 70,8"
-                fill="none"
-                stroke="#00f5d4"
-                strokeWidth="2.5"
-                filter="drop-shadow(0 0 4px #00f5d4)"
-              />
-              <circle cx="70" cy="8" r="3.5" fill="#00f5d4" />
-            </svg>
-          ) : (
-            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-              <path
-                d="M 0,10 Q 20,25 40,12 T 70,8"
-                fill="none"
-                stroke="#0284c7"
-                strokeWidth="2.5"
-              />
-              <circle cx="70" cy="8" r="3.5" fill="#0284c7" />
-            </svg>
-          )}
+          <SingleStandingBar
+            value={staffLoad}
+            max={100}
+            min={0}
+            unit="%"
+            isCyberpunk={isCyberpunk}
+          />
         </div>
 
         {/* 3. GUEST WAIT */}
@@ -1920,31 +2313,16 @@ export default function OwnerDashboardPage() {
               <ArrowDownRight className="w-3 h-3" /> 3 min today
             </span>
           </div>
-          {isCyberpunk ? (
-            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-              <path
-                d="M 0,8 Q 25,22 45,14 T 70,20"
-                fill="none"
-                stroke="#c6ff00"
-                strokeWidth="2.5"
-                filter="drop-shadow(0 0 4px #c6ff00)"
-              />
-              <circle cx="70" cy="20" r="3.5" fill="#c6ff00" />
-            </svg>
-          ) : (
-            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-              <path
-                d="M 0,8 Q 25,22 45,14 T 70,20"
-                fill="none"
-                stroke="#7c3aed"
-                strokeWidth="2.5"
-              />
-              <circle cx="70" cy="20" r="3.5" fill="#7c3aed" />
-            </svg>
-          )}
+          <SingleStandingBar
+            value={avgWaitMin}
+            max={25}
+            min={0}
+            unit="m"
+            isCyberpunk={isCyberpunk}
+          />
         </div>
 
-        {/* 4. TODAY'S REVENUE */}
+        {/* 4. TODAY'S REVENUE (ENTIRE WEEK) */}
         <div className={`p-3 flex items-center justify-between transition-all ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)] hover:border-[#c6ff00]' : 'neumorph-card'}`}>
           <div>
             <span className={`block uppercase tracking-wider font-bold ${isCyberpunk ? 'font-cyber-display text-[9px] text-[#cbd5e1]' : 'text-[9px] font-bold text-slate-500'}`}>
@@ -1957,28 +2335,10 @@ export default function OwnerDashboardPage() {
               <ArrowUpRight className="w-3 h-3" /> 8.7% vs fcst
             </span>
           </div>
-          {isCyberpunk ? (
-            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-              <path
-                d="M 0,20 Q 20,15 45,8 T 70,4"
-                fill="none"
-                stroke="#c6ff00"
-                strokeWidth="2.5"
-                filter="drop-shadow(0 0 4px #c6ff00)"
-              />
-              <circle cx="70" cy="4" r="3.5" fill="#c6ff00" />
-            </svg>
-          ) : (
-            <svg className="w-14 h-7 overflow-visible" viewBox="0 0 70 30">
-              <path
-                d="M 0,20 Q 20,15 45,8 T 70,4"
-                fill="none"
-                stroke="#2563eb"
-                strokeWidth="2.5"
-              />
-              <circle cx="70" cy="4" r="3.5" fill="#2563eb" />
-            </svg>
-          )}
+          <WeekRevenueStandingGraph
+            todayRevenue={revenueToday}
+            isCyberpunk={isCyberpunk}
+          />
         </div>
       </section>
 
@@ -2214,7 +2574,7 @@ export default function OwnerDashboardPage() {
 
         {/* PANEL 4: 7-DAY STRESS TREND */}
         <div className={`p-2.5 flex flex-col justify-between ${isCyberpunk ? 'cut-corner-tr bg-[#0e1117] border border-[#c6ff00]/40 shadow-[0_0_15px_rgba(198,255,0,0.06)]' : 'neumorph-card'}`}>
-          <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
+          <div className="flex items-center justify-between pb-1 border-b border-slate-200/70 mb-1">
             <div className="flex items-center gap-1.5">
               {isCyberpunk && (
                 <div className="flex items-center gap-0.5">
@@ -2226,67 +2586,15 @@ export default function OwnerDashboardPage() {
                 7-DAY STRESS TREND
               </span>
             </div>
-            <span className={`font-bold ${isCyberpunk ? 'font-cyber text-[10px] text-[#c6ff00]' : 'text-[11px] text-blue-600'}`}>
+            <span className={`px-1.5 py-0.2 rounded-full font-bold ${isCyberpunk ? 'border border-[#c6ff00]/40 font-cyber text-[9px] bg-[#121822] text-[#c6ff00]' : 'text-[9px] bg-purple-100 text-purple-800'}`}>
               Current: {currentStress}
             </span>
           </div>
 
-          {isCyberpunk ? (
-            /* Dual-tone Neon Cyber Bars */
-            <div className="h-14 flex items-end justify-between gap-1 px-1.5 pt-1 pb-0.5 border-b border-l border-[#c6ff00]/30 bg-[#080a0d] my-0.5">
-              {[
-                { label: '09', lime: 38, cyan: 22 },
-                { label: '10', lime: 82, cyan: 58 },
-                { label: '11', lime: 65, cyan: 32 },
-                { label: '12', lime: 25, cyan: 48 },
-                { label: '13', lime: 60, cyan: 38 },
-                { label: '14', lime: 64, cyan: 44 },
-                { label: '15', lime: 78, cyan: 52 },
-              ].map((d, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center h-full justify-end">
-                  <div className="flex items-end gap-0.5 w-full justify-center h-full">
-                    <div style={{ height: `${d.lime}%` }} className="w-1.5 sm:w-2 bg-[#c6ff00] shadow-[0_0_6px_#c6ff00]" />
-                    <div style={{ height: `${d.cyan}%` }} className="w-1.5 sm:w-2 bg-[#00f5d4] shadow-[0_0_6px_#00f5d4]" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="h-12 flex items-center justify-center py-0.5">
-              <svg className="w-full h-full overflow-visible" viewBox="0 0 160 60">
-                <defs>
-                  <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#2563eb" stopOpacity="0.0" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M 0,40 Q 25,20 50,38 T 100,25 T 160,18 L 160,60 L 0,60 Z"
-                  fill="url(#trendGradient)"
-                />
-                <path
-                  d="M 0,40 Q 25,20 50,38 T 100,25 T 160,18"
-                  fill="none"
-                  stroke="#2563eb"
-                  strokeWidth="2.5"
-                />
-                <circle cx="0" cy="40" r="2.5" fill="#2563eb" />
-                <circle cx="26" cy="28" r="2.5" fill="#2563eb" />
-                <circle cx="52" cy="38" r="2.5" fill="#2563eb" />
-                <circle cx="78" cy="22" r="2.5" fill="#2563eb" />
-                <circle cx="104" cy="26" r="2.5" fill="#2563eb" />
-                <circle cx="130" cy="24" r="2.5" fill="#2563eb" />
-                <circle cx="160" cy="18" r="4" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
-              </svg>
-            </div>
-          )}
-
-          <div className={`flex justify-between pt-0.5 border-t border-slate-200/70 font-semibold ${isCyberpunk ? 'font-cyber-display text-[8px] text-slate-300 font-bold' : 'text-[8.5px] text-slate-500'}`}>
-            <span>09 May</span>
-            <span>11 May</span>
-            <span>13 May</span>
-            <span>15 May</span>
-          </div>
+          <StressTrendWaveGraph
+            currentStress={currentStress}
+            isCyberpunk={isCyberpunk}
+          />
         </div>
       </section>
 
