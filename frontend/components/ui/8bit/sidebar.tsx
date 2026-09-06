@@ -95,8 +95,8 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           >
             {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </Button>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 bg-[#00ff66] inline-block shadow-[1px_1px_0px_#000]" />
+          <div className="flex items-center gap-2">
+            <img src="/resortier_ai_logo.png" alt="ResortierAi" className="w-6 h-6 object-contain rounded bg-[#0a1014] border border-cyan-400/60 p-0.5 shadow-[1px_1px_0px_#000]" />
             <span className="font-pixel text-[11px] text-white tracking-wider">
               RESORTIERAI
             </span>
@@ -153,8 +153,8 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
                 onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-2 group"
               >
-                <div className="w-8 h-8 bg-[#00ff66] border-2 border-black flex items-center justify-center text-black font-pixel text-xs shadow-[2px_2px_0px_#000] group-hover:bg-[#2eff81]">
-                  RA
+                <div className="w-9 h-9 rounded-lg overflow-hidden border-2 border-cyan-400/80 bg-[#0a1014] p-0.5 shadow-[2px_2px_0px_#000] group-hover:border-[#00ff66] transition-all shrink-0">
+                  <img src="/resortier_ai_logo.png" alt="ResortierAi" className="w-full h-full object-contain rounded" />
                 </div>
                 <div>
                   <h1 className="font-pixel text-xs text-white tracking-wider">
@@ -355,8 +355,8 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
               SB
             </div>
             {/* 8-bit AI Agent Badge */}
-            <div className="w-7 h-7 border-2 border-black bg-[#00ff66] text-black font-pixel text-[8px] font-black flex items-center justify-center shadow-[2px_2px_0px_#000] rounded-sm">
-              AI
+            <div className="w-7 h-7 border-2 border-cyan-400/80 bg-[#0a1014] p-0.5 rounded shadow-[2px_2px_0px_#000] shrink-0">
+              <img src="/resortier_ai_logo.png" alt="ResortierAi" className="w-full h-full object-contain" />
             </div>
             <div>
               <div className="font-pixel text-[8px] text-white">RESORTIERAI</div>

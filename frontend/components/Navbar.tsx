@@ -64,11 +64,11 @@ export default function Navbar() {
         {/* Logo & Brand */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#00ff66] shadow-[0_0_8px_rgba(0,255,102,0.4)] flex items-center justify-center bg-[#0a1014] p-0.5">
+            <div className="w-9 h-9 rounded-xl overflow-hidden border-2 border-cyan-400/80 shadow-[0_0_12px_rgba(0,240,255,0.4)] flex items-center justify-center bg-[#0a1014] p-0.5 group-hover:border-[#00ff66] transition-all">
               <img 
-                src="/resorva_logo.png" 
-                alt="Resorva" 
-                className="w-full h-full object-cover rounded-full"
+                src="/resortier_ai_logo.png" 
+                alt="ResortierAi" 
+                className="w-full h-full object-contain rounded-lg"
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none'
                 }}
