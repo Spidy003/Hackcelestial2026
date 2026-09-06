@@ -17,14 +17,6 @@ import {
 import { useOwnerTheme } from '@/lib/owner-theme'
 import Retro8BitcnWidget from '@/components/Retro8BitcnWidget'
 
-const DIVE_START_FRAME = 15
-const DIVE_END_FRAME = 120
-const DIVE_TOTAL_FRAMES = DIVE_END_FRAME - DIVE_START_FRAME + 1 // 106 frames
-
-const DIVE_FRAME_PATHS = Array.from({ length: DIVE_TOTAL_FRAMES }, (_, i) => {
-  const num = String(DIVE_START_FRAME + i).padStart(3, '0')
-  return `/hotel-frames/ezgif-frame-${num}.jpg`
-})
 
 
 interface AlertItem {
@@ -600,88 +592,6 @@ export default function OwnerDashboardPage() {
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null)
   const [selectedPinDetails, setSelectedPinDetails] = useState<VisualPin | null>(null)
   const [showHotelAggregateModal, setShowHotelAggregateModal] = useState(false)
-  // ── In-Place 3D Hotel Dive inside Digital Twin Space ──
-  const [isHotelDiving, setIsHotelDiving] = useState(false)
-  const [currentDiveFrame, setCurrentDiveFrame] = useState(DIVE_START_FRAME)
-  const [diveCompleted, setDiveCompleted] = useState(false)
-  const diveCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const diveImagesRef = useRef<HTMLImageElement[]>([])
-
-  // Preload all 106 dive frames into memory for instantaneous response
-  useEffect(() => {
-    let mounted = true
-    const imgs: HTMLImageElement[] = []
-    DIVE_FRAME_PATHS.forEach((src, idx) => {
-      const img = new Image()
-      img.src = src
-      imgs[idx] = img
-    })
-    diveImagesRef.current = imgs
-    return () => {
-      mounted = false
-    }
-  }, [])
-
-  // In-place smooth dive animation inside Live Digital Twin container
-  useEffect(() => {
-    if (!isHotelDiving) return
-
-    setDiveCompleted(false)
-    let currentIdx = 0
-    let lastTime = performance.now()
-    const targetFps = 30
-    const frameInterval = 1000 / targetFps
-    let animId: number
-
-    const drawFrame = (frameIdx: number) => {
-      const canvas = diveCanvasRef.current
-      if (!canvas) return
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-
-      const img = diveImagesRef.current[frameIdx]
-      if (img && img.complete && img.naturalWidth > 0) {
-        if (canvas.width !== img.naturalWidth) {
-          canvas.width = img.naturalWidth
-          canvas.height = img.naturalHeight
-        }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      }
-    }
-
-    // Render frame 15 right away
-    drawFrame(0)
-    setCurrentDiveFrame(DIVE_START_FRAME)
-
-    const tick = (now: number) => {
-      const elapsed = now - lastTime
-
-      if (elapsed >= frameInterval) {
-        lastTime = now - (elapsed % frameInterval)
-        currentIdx++
-
-        if (currentIdx >= DIVE_TOTAL_FRAMES) {
-          // Reached frame 120: Stop smoothly
-          const finalIdx = DIVE_TOTAL_FRAMES - 1
-          drawFrame(finalIdx)
-          setCurrentDiveFrame(DIVE_END_FRAME)
-          setDiveCompleted(true)
-          return
-        }
-
-        drawFrame(currentIdx)
-        setCurrentDiveFrame(DIVE_START_FRAME + currentIdx)
-      }
-
-      animId = requestAnimationFrame(tick)
-    }
-
-    animId = requestAnimationFrame(tick)
-
-    return () => {
-      if (animId) cancelAnimationFrame(animId)
-    }
-  }, [isHotelDiving])
   const [selectedScenario, setSelectedScenario] = useState('98% Occupancy — evening peak')
   const [simulationResult, setSimulationResult] = useState<string | null>(null)
   const [simulating, setSimulating] = useState(false)
@@ -1950,153 +1860,130 @@ export default function OwnerDashboardPage() {
             </div>
           </div>
 
-          {/* Aerial Map Container with Visual Pins OR In-Place 3D Hotel Dive */}
+          {/* Aerial Map Container */}
           <div className="relative flex-1 min-h-0 w-full neumorph-inset p-1 rounded-2xl overflow-hidden group">
             <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-900 select-none">
               
-              {!isHotelDiving ? (
-                <>
-                  {/* Actual Drone Aerial Photograph */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/resort-aerial.jpg"
-                    alt="Live Digital Twin Aerial Drone Map"
-                    className="w-full h-full object-cover object-center pointer-events-none"
-                  />
+              {/* Actual Drone Aerial Photograph */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/resort-aerial.jpg"
+                alt="Live Digital Twin Aerial Drone Map"
+                className="w-full h-full object-cover object-center pointer-events-none"
+              />
 
-                  {/* Ocean Tag on the right beach shore */}
-                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/70 backdrop-blur-xs border border-sky-400/30 text-[10px] font-bold text-sky-200 flex items-center gap-1.5 shadow-md pointer-events-none">
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-                    <span>Ocean Space & Beachfront</span>
-                  </div>
+              {/* Ocean Tag on the right beach shore */}
+              <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/70 backdrop-blur-xs border border-sky-400/30 text-[10px] font-bold text-sky-200 flex items-center gap-1.5 shadow-md pointer-events-none">
+                <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                <span>Ocean Space & Beachfront</span>
+              </div>
 
-                  {/* Visual Pins Overlay with Real-Time Staff Counts */}
-                  {displayedPins.map((pin) => {
-                    const isHotel = pin.isHotel
-                    const isStretched = pin.statusType === 'stretched'
-                    const isBusy = pin.statusType === 'busy'
+              {/* Visual Pins Overlay with Real-Time Staff Counts */}
+              {displayedPins.map((pin) => {
+                const isHotel = pin.isHotel
+                const isStretched = pin.statusType === 'stretched'
+                const isBusy = pin.statusType === 'busy'
 
-                    return (
-                      <div
-                        key={pin.id}
-                        onClick={() => {
-                          if (isHotel) {
-                            setIsHotelDiving(true)
-                          } else {
-                            setSelectedPinDetails(pin)
-                            setSelectedZone({
-                              id: Number(pin.id) || 10,
-                              name: pin.name,
-                              workload_index: pin.load,
-                              staff_on_duty: pin.staffOnDuty,
-                              staff_required_now: pin.staffNeeded,
-                              backlog_count: pin.activeRequests,
-                            } as Zone)
-                          }
-                        }}
-                        style={{
-                          left: `${pin.x}%`,
-                          top: `${pin.y}%`,
-                          transform: 'translate(-50%, -50%)',
-                        }}
-                        className={`absolute z-20 cursor-pointer transition-all duration-200 hover:scale-110 hover:z-30 group/pin`}
-                      >
-                        {/* Hotel Special Pill vs Regular Zone Pill */}
-                        {isHotel ? (
-                          <div className="flex flex-col items-center">
-                            <div className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-blue-900/95 via-indigo-900/95 to-blue-950/95 text-white border-2 border-amber-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.6)] backdrop-blur-md flex items-center gap-2">
-                              <div className="w-4 h-4 rounded-full bg-amber-400 text-slate-900 flex items-center justify-center font-black text-[9px] shadow-sm">
-                                ★
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1.5 leading-none">
-                                  <span className="font-extrabold text-[11px] tracking-tight text-amber-200">
-                                    {pin.name}
-                                  </span>
-                                  <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/90 text-white text-[8px] font-bold">
-                                    {hotelAggregatedStats.calculatedLoad}% LOAD
-                                  </span>
-                                  <span className="px-1.5 py-0.2 rounded-full bg-amber-400/25 text-amber-300 text-[8px] font-extrabold border border-amber-400/40 flex items-center gap-0.5 animate-pulse">
-                                    <Eye className="w-2.5 h-2.5" /> DIVE IN
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[8.5px] font-bold text-sky-200 flex items-center gap-1">
-                                    <Users className="w-2.5 h-2.5 text-sky-300" /> {hotelAggregatedStats.totalStaffCount} Staff Working
-                                  </span>
-                                  <span className="text-[8px] text-slate-300">
-                                    • {hotelAggregatedStats.occupiedRooms}/84 Keys
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            {/* Downward Pointer Triangle */}
-                            <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-amber-400 drop-shadow-sm" />
+                return (
+                  <div
+                    key={pin.id}
+                    onClick={() => {
+                      if (isHotel) {
+                        setShowHotelAggregateModal(true)
+                      } else {
+                        setSelectedPinDetails(pin)
+                        setSelectedZone({
+                          id: Number(pin.id) || 10,
+                          name: pin.name,
+                          workload_index: pin.load,
+                          staff_on_duty: pin.staffOnDuty,
+                          staff_required_now: pin.staffNeeded,
+                          backlog_count: pin.activeRequests,
+                        } as Zone)
+                      }
+                    }}
+                    style={{
+                      left: `${pin.x}%`,
+                      top: `${pin.y}%`,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                    className={`absolute z-20 cursor-pointer transition-all duration-200 hover:scale-110 hover:z-30 group/pin`}
+                  >
+                    {/* Hotel Special Pill vs Regular Zone Pill */}
+                    {isHotel ? (
+                      <div className="flex flex-col items-center">
+                        <div className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-blue-900/95 via-indigo-900/95 to-blue-950/95 text-white border-2 border-amber-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.6)] backdrop-blur-md flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-amber-400 text-slate-900 flex items-center justify-center font-black text-[9px] shadow-sm">
+                            ★
                           </div>
-                        ) : (
-                          <div className="flex flex-col items-center">
-                            <div className={`px-2 py-1 rounded-lg backdrop-blur-md border shadow-[0_3px_10px_rgba(0,0,0,0.45)] flex items-center gap-1.5 transition-colors ${
-                              isStretched 
-                                ? 'bg-rose-950/90 border-rose-400/80 text-white' 
-                                : isBusy 
-                                ? 'bg-amber-950/90 border-amber-400/80 text-white' 
-                                : 'bg-slate-900/85 border-white/30 text-white'
-                            }`}>
-                              <span className={`w-2 h-2 rounded-full shrink-0 ${
-                                isStretched 
-                                  ? 'bg-rose-500 animate-ping' 
-                                  : isBusy 
-                                  ? 'bg-amber-400' 
-                                  : 'bg-emerald-400'
-                              }`} />
-
-                              <div className="leading-tight">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-bold text-[10px] whitespace-nowrap">
-                                    {pin.name}
-                                  </span>
-                                  {showStaffOverlay && (
-                                    <span className="px-1 py-0.2 rounded bg-blue-500/30 text-sky-200 text-[8px] font-bold flex items-center gap-0.5">
-                                      <Users className="w-2 h-2" /> {pin.staffOnDuty}
-                                    </span>
-                                  )}
-                                </div>
-                                <span className={`text-[8.5px] font-medium block whitespace-nowrap mt-0.5 ${
-                                  isStretched ? 'text-rose-200' : isBusy ? 'text-amber-200' : 'text-slate-300'
-                                }`}>
-                                  {pin.staffOnDuty} Staff Working • {pin.load}% Load
-                                </span>
-                              </div>
+                          <div>
+                            <div className="flex items-center gap-1.5 leading-none">
+                              <span className="font-extrabold text-[11px] tracking-tight text-amber-200">
+                                {pin.name}
+                              </span>
+                              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/90 text-white text-[8px] font-bold">
+                                {hotelAggregatedStats.calculatedLoad}% LOAD
+                              </span>
+                              <span className="px-1.5 py-0.2 rounded-full bg-amber-400/25 text-amber-300 text-[8px] font-bold border border-amber-400/40 flex items-center gap-0.5">
+                                <Building2 className="w-2.5 h-2.5" /> HUB
+                              </span>
                             </div>
-                            <div className={`w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] ${
-                              isStretched ? 'border-t-rose-500' : isBusy ? 'border-t-amber-400' : 'border-t-slate-800'
-                            }`} />
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[8.5px] font-bold text-sky-200 flex items-center gap-1">
+                                <Users className="w-2.5 h-2.5 text-sky-300" /> {hotelAggregatedStats.totalStaffCount} Staff Working
+                              </span>
+                              <span className="text-[8px] text-slate-300">
+                                • {hotelAggregatedStats.occupiedRooms}/84 Keys
+                              </span>
+                            </div>
                           </div>
-                        )}
+                        </div>
+                        {/* Downward Pointer Triangle */}
+                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-amber-400 drop-shadow-sm" />
                       </div>
-                    )
-                  })}
-                </>
-              ) : (
-                /* IN-PLACE 3D HOTEL DIVE: Exact same size, space and position as live digital twin */
-                <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
-                  <canvas
-                    ref={diveCanvasRef}
-                    className="w-full h-full object-cover object-center"
-                  />
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <div className={`px-2 py-1 rounded-lg backdrop-blur-md border shadow-[0_3px_10px_rgba(0,0,0,0.45)] flex items-center gap-1.5 transition-colors ${
+                          isStretched 
+                            ? 'bg-rose-950/90 border-rose-400/80 text-white' 
+                            : isBusy 
+                            ? 'bg-amber-950/90 border-amber-400/80 text-white' 
+                            : 'bg-slate-900/85 border-white/30 text-white'
+                        }`}>
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${
+                            isStretched 
+                              ? 'bg-rose-500 animate-ping' 
+                              : isBusy 
+                              ? 'bg-amber-400' 
+                              : 'bg-emerald-400'
+                          }`} />
 
-                  {/* ONLY KEEP: Return to Aerial Map button */}
-                  <div className="absolute top-3 right-3 pointer-events-auto z-30">
-                    <button
-                      onClick={() => setIsHotelDiving(false)}
-                      className="px-3.5 py-1.5 rounded-full bg-slate-950/85 hover:bg-slate-900 text-white border border-white/20 backdrop-blur-md text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg hover:scale-105"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>Return to Aerial Map</span>
-                    </button>
+                          <div className="leading-tight">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-[10px] whitespace-nowrap">
+                                {pin.name}
+                              </span>
+                              {showStaffOverlay && (
+                                <span className="px-1 py-0.2 rounded bg-blue-500/30 text-sky-200 text-[8px] font-bold flex items-center gap-0.5">
+                                  <Users className="w-2 h-2" /> {pin.staffOnDuty}
+                                </span>
+                              )}
+                            </div>
+                            <span className={`text-[8.5px] font-medium block whitespace-nowrap mt-0.5 ${
+                              isStretched ? 'text-rose-200' : isBusy ? 'text-amber-200' : 'text-slate-300'
+                            }`}>
+                              {pin.staffOnDuty} Staff Working • {pin.load}% Load
+                            </span>
+                          </div>
+                        </div>
+                        <div className={`w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] ${
+                          isStretched ? 'border-t-rose-500' : isBusy ? 'border-t-amber-400' : 'border-t-slate-800'
+                        }`} />
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                )
+              })}
 
             </div>
           </div>
@@ -3135,20 +3022,10 @@ export default function OwnerDashboardPage() {
               </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowHotelAggregateModal(false)
-                  setIsHotelDiving(true)
-                }}
-                className="py-2.5 px-4 rounded-full neumorph-btn text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center justify-center gap-1.5"
-              >
-                <Eye className="w-3.5 h-3.5 text-blue-600" />
-                <span>Play 3D Dive</span>
-              </button>
+            <div className="pt-2">
               <button
                 onClick={() => setShowHotelAggregateModal(false)}
-                className="flex-1 py-2.5 neumorph-btn-blue text-xs font-bold"
+                className="w-full py-2.5 neumorph-btn-blue text-xs font-bold"
               >
                 Close Hotel Summary
               </button>
