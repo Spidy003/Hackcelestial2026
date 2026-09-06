@@ -589,3 +589,54 @@ async def checkout_guest(req: CheckoutRequest, db: Session = Depends(get_db)):
         "room_status": "vacant_dirty",
         "room_number": req.room_number,
     }
+
+
+@router.post("/guests/checkout-all")
+async def checkout_all_guests(db: Session = Depends(get_db)):
+    """Check out all guests, set all rooms to vacant_dirty, broadcast 0 occupancy."""
+    from backend.models.resort import Room
+    from backend.core.broadcast import manager
+    from datetime import datetime
+
+    db.query(Room).update({Room.status: "vacant_dirty"})
+    db.commit()
+
+    total_rooms = db.query(Room).count() or 84
+    await manager.broadcast_patch(
+        paths={
+            "kpis.occupied_rooms": 0,
+            "kpis.occupancy_pct": 0.0,
+        },
+        sim_ts=datetime.utcnow(),
+    )
+    return {"status": "success", "message": "All rooms checked out and set to vacant_dirty."}
+
+
+@router.post("/guests/reset-roster")
+async def reset_roster_guests(db: Session = Depends(get_db)):
+    """Re-admit all guests, restore standard 76 occupied rooms, broadcast live patch."""
+    from backend.models.resort import Room
+    from backend.core.broadcast import manager
+    from datetime import datetime
+
+    rooms = db.query(Room).all()
+    for idx, r in enumerate(rooms):
+        if idx < 76:
+            r.status = "occupied"
+        else:
+            r.status = "vacant_clean"
+    db.commit()
+
+    total_rooms = len(rooms) or 84
+    occupied_rooms = min(76, total_rooms)
+    occupancy_pct = round((occupied_rooms / total_rooms * 100), 1)
+
+    await manager.broadcast_patch(
+        paths={
+            "kpis.occupied_rooms": occupied_rooms,
+            "kpis.occupancy_pct": occupancy_pct,
+        },
+        sim_ts=datetime.utcnow(),
+    )
+    return {"status": "success", "message": "All guests re-admitted to in-house roster."}
+

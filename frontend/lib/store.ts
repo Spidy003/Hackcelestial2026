@@ -112,6 +112,7 @@ interface ResortStore {
   setTheme: (t: 'white' | 'dark') => void
 
   // Actions
+  recomputeLiveOccupancy: () => void
   setClock: (c: Partial<ClockState>) => void
   applySnapshot: (state: Record<string, unknown>, sim_ts: string) => void
   applyPatch: (paths: Record<string, unknown>, sim_ts: string) => void
@@ -119,6 +120,48 @@ interface ResortStore {
   addDecisions: (decisions: Decision[]) => void
 }
 
+/**
+ * Reads localStorage to compute live occupancy based on checked-out guests.
+ * ONLY safe to call on the client (inside useEffect or event handlers).
+ * Never call this during SSR or inside store initialisation.
+ */
+export function getLiveOccupancy(baseOccupied = 76): { occupied_rooms: number; occupancy_pct: number } {
+  if (typeof window === 'undefined') {
+    return { occupied_rooms: baseOccupied, occupancy_pct: Math.round((baseOccupied / 84) * 1000) / 10 }
+  }
+  try {
+    const activeBookings: any[] = JSON.parse(localStorage.getItem('resort_active_bookings') || '[]')
+    const activeChaos: any = JSON.parse(localStorage.getItem('resort_active_chaos') || 'null')
+    const checkedOut: string[] = JSON.parse(localStorage.getItem('resort_checked_out_guests') || '[]')
+
+    const totalRosterCount = 5 + activeBookings.length
+    const checkedOutCount = checkedOut.length
+    const activeInHouseCount = Math.max(0, totalRosterCount - checkedOutCount)
+    const activeRatio = totalRosterCount > 0 ? (activeInHouseCount / totalRosterCount) : 0
+
+    const addedRooms = activeBookings.reduce(
+      (sum, b) => sum + Math.max(1, Math.ceil((b.party_size || 2) / 2)),
+      0
+    )
+
+    const isWeddingRush = activeChaos?.scenarioId === 'wedding_rush'
+    const base = (baseOccupied && baseOccupied > 40) ? baseOccupied : 76
+
+    const occupied_rooms = isWeddingRush
+      ? 80
+      : (activeInHouseCount === 0 ? 0 : Math.min(84, Math.max(1, Math.round(base * activeRatio) + addedRooms)))
+
+    const occupancy_pct = isWeddingRush
+      ? 96.0
+      : (activeInHouseCount === 0 ? 0.0 : Math.min(99.0, Math.round((occupied_rooms / 84) * 1000) / 10))
+
+    return { occupied_rooms, occupancy_pct }
+  } catch {
+    return { occupied_rooms: baseOccupied, occupancy_pct: Math.round((baseOccupied / 84) * 1000) / 10 }
+  }
+}
+
+// Static defaults — no Date.now() or Math.random() to prevent SSR mismatch
 const DEFAULT_KPIS: KPIs = {
   occupancy_pct: 85.7, occupied_rooms: 72, staff_on_duty: 28,
   open_tasks: 6, sla_breaches: 0, decisions_today: 14,
@@ -127,21 +170,12 @@ const DEFAULT_KPIS: KPIs = {
 }
 
 const DEFAULT_CLOCK: ClockState = {
-  sim_now: new Date().toISOString(), speed: '10x',
+  sim_now: '2026-01-01T00:00:00.000Z', speed: '10x',
   sim_minutes_per_tick: 30, paused: false, tick_count: 0,
 }
 
 function toMap<T extends { id: number | string }>(arr: T[]): Record<number | string, T> {
   return Object.fromEntries((arr || []).map(item => [item.id, item]))
-}
-
-/** Apply a dot-notation patch path to a nested object */
-function setPath(obj: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
-  const parts = path.split('.')
-  if (parts.length === 1) return { ...obj, [path]: value }
-  const [head, ...rest] = parts
-  const nested = (obj[head] as Record<string, unknown>) || {}
-  return { ...obj, [head]: setPath(nested, rest.join('.'), value) }
 }
 
 export const useResortStore = create<ResortStore>()(
@@ -160,30 +194,52 @@ export const useResortStore = create<ResortStore>()(
     theme: 'white',
     setTheme: (t) => set({ theme: t }),
 
+    /**
+     * Client-only: reads localStorage checked-out guests and adjusts occupancy.
+     * Called after checkout events; never called during SSR.
+     */
+    recomputeLiveOccupancy: () => {
+      if (typeof window === 'undefined') return
+      set(state => {
+        const live = getLiveOccupancy(state.kpis?.occupied_rooms ?? 76)
+        return {
+          kpis: {
+            ...state.kpis,
+            occupied_rooms: live.occupied_rooms,
+            occupancy_pct: live.occupancy_pct,
+          }
+        }
+      })
+    },
+
     setClock: (c) => set(s => ({ clock: { ...s.clock, ...c } })),
 
     applySnapshot: (state, sim_ts) => {
-      set(current => ({
-        zones:     toMap((state.zones as Zone[]) || []),
-        staff:     toMap((state.staff as Staff[]) || []),
-        tasks:     toMap((state.tasks as Task[]) || []),
-        guests:    toMap((state.guests as Guest[]) || []),
-        assets:    toMap((state.assets as Asset[]) || []),
-        inventory: toMap((state.inventory as InventoryItem[]) || []),
-        slots:     toMap((state.slots as ServiceSlot[]) || []),
-        agents:    Object.fromEntries(
-          ((state.agents as AgentStatus[]) || []).map(a => [a.name, a])
-        ),
-        kpis:      (state.kpis as KPIs) || current.kpis || DEFAULT_KPIS,
-        decisions: (state.decisions as Decision[]) || [],
-        events:    (state.events as ResortEvent[]) || [],
-        segments:  (state.segments as unknown[]) || [],
-        alerts:    (state.alerts as unknown[]) || [],
-        stress_index: (state.stress_index as number) ?? 68,
-        stress_trend: (state.stress_trend as number[]) ?? [58, 62, 54, 68, 60, 64, 68],
-        weather: (state.weather as { temp: number; condition: string }) ?? { temp: 28, condition: 'Partly Cloudy' },
-        clock:     (state.clock as ClockState) || DEFAULT_CLOCK,
-      }))
+      set(current => {
+        const incomingKpis = (state.kpis as KPIs) || current.kpis || DEFAULT_KPIS
+        // Use backend occupancy directly — do NOT apply localStorage here (SSR-unsafe)
+        return {
+          zones:     toMap((state.zones as Zone[]) || []),
+          staff:     toMap((state.staff as Staff[]) || []),
+          tasks:     toMap((state.tasks as Task[]) || []),
+          guests:    toMap((state.guests as Guest[]) || []),
+          assets:    toMap((state.assets as Asset[]) || []),
+          inventory: toMap((state.inventory as InventoryItem[]) || []),
+          slots:     toMap((state.slots as ServiceSlot[]) || []),
+          agents:    Object.fromEntries(
+            ((state.agents as AgentStatus[]) || []).map(a => [a.name, a])
+          ),
+          kpis:      incomingKpis,
+          decisions: (state.decisions as Decision[]) || [],
+          events:    (state.events as ResortEvent[]) || [],
+          segments:  (state.segments as unknown[]) || [],
+          alerts:    (state.alerts as unknown[]) || [],
+          stress_index: (state.stress_index as number) ?? 68,
+          stress_trend: (state.stress_trend as number[]) ?? [58, 62, 54, 68, 60, 64, 68],
+          weather: (state.weather as { temp: number; condition: string }) ?? { temp: 28, condition: 'Partly Cloudy' },
+          clock:     (state.clock as ClockState) || DEFAULT_CLOCK,
+        }
+      })
     },
 
     applyPatch: (paths, sim_ts) => {
@@ -225,6 +281,10 @@ export const useResortStore = create<ResortStore>()(
           }
         }
 
+        // DO NOT call getLiveOccupancy here — this runs during patch application
+        // which may happen server-side. recomputeLiveOccupancy() is triggered
+        // client-side via window event listeners below.
+
         return updates
       })
     },
@@ -244,3 +304,17 @@ export const useResortStore = create<ResortStore>()(
     },
   }))
 )
+
+// -----------------------------------------------------------------------
+// Client-only: sync occupancy after guest checkouts / bookings / chaos.
+// These listeners are only registered in the browser — never during SSR.
+// -----------------------------------------------------------------------
+if (typeof window !== 'undefined') {
+  const handleOccupancySync = () => {
+    useResortStore.getState().recomputeLiveOccupancy()
+  }
+  window.addEventListener('resort-guest-checkout', handleOccupancySync)
+  window.addEventListener('storage', handleOccupancySync)
+  window.addEventListener('resort-active-bookings-change', handleOccupancySync)
+  window.addEventListener('resort-chaos-change', handleOccupancySync)
+}

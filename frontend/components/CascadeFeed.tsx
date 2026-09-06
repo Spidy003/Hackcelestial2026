@@ -12,7 +12,7 @@ import { GitBranch, Eye, ChevronUp, ChevronDown, Sparkles, AlertTriangle, Shield
 const MOCK_FALLBACK_DECISIONS: Decision[] = [
   {
     id: 'DEC-101',
-    ts: new Date().toISOString(),
+    ts: '2026-09-06T06:00:00.000Z',
     agent: 'staffing',
     kind: 'shift_reassignment',
     title: 'Reassigned 3 staff to North Villas for wedding group check-in rush',
@@ -32,7 +32,7 @@ const MOCK_FALLBACK_DECISIONS: Decision[] = [
   },
   {
     id: 'DEC-102',
-    ts: new Date(Date.now() - 60000).toISOString(),
+    ts: '2026-09-06T05:59:00.000Z',
     agent: 'pricing',
     kind: 'rate_calendar_update',
     title: 'Increased Sunset Villa weekend rate from ₹22,000 to ₹27,500 (+25%)',
@@ -51,7 +51,7 @@ const MOCK_FALLBACK_DECISIONS: Decision[] = [
   },
   {
     id: 'DEC-103',
-    ts: new Date(Date.now() - 120000).toISOString(),
+    ts: '2026-09-06T05:58:00.000Z',
     agent: 'maintenance',
     kind: 'sensor_trigger_workorder',
     title: 'Chiller Unit #2 compressor vibration anomaly detected (2.8 mm/s)',
@@ -70,7 +70,7 @@ const MOCK_FALLBACK_DECISIONS: Decision[] = [
   },
   {
     id: 'DEC-104',
-    ts: new Date(Date.now() - 180000).toISOString(),
+    ts: '2026-09-06T05:57:00.000Z',
     agent: 'sentiment',
     kind: 'service_recovery_offer',
     title: 'Service recovery triggered for Suite 204: Complimentary dinner & GM note',

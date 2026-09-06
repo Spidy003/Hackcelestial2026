@@ -275,8 +275,8 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="p-2 bg-black border border-slate-800 text-center mb-2">
-              <span className="font-mono-data text-xs text-[#00ff66] font-bold tracking-tight block">
-                {formatSimTime(clock?.sim_now || new Date().toISOString(), true)}
+              <span className="font-mono-data text-xs text-[#00ff66] font-bold tracking-tight block" suppressHydrationWarning>
+                {formatSimTime(clock?.sim_now || '2026-01-01T00:00:00.000Z', true)}
               </span>
             </div>
 
