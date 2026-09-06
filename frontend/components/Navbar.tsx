@@ -10,8 +10,9 @@ import { API_URL } from '@/lib/api'
 import { 
   Play, Pause, FastForward, Activity, ShieldCheck, 
   Users, Wrench, Package, TrendingUp, MessageSquare, 
-  Cpu, AlertTriangle, Radio, Sparkles, Layers
+  Cpu, AlertTriangle, Radio, Sparkles, Layers, Bell
 } from 'lucide-react'
+import DemoReportAlertModal from './DemoReportAlertModal'
 
 const navItems = [
   { href: '/', label: 'Command Centre', icon: Activity },
@@ -31,6 +32,7 @@ export default function Navbar() {
   const { clock, kpis, connectionStatus, setClock } = useResortStore()
   const metrics = useLiveMetrics()
   const [speedLoading, setSpeedLoading] = useState(false)
+  const [showDemoAlert, setShowDemoAlert] = useState(false)
 
   const togglePause = async () => {
     try {
@@ -147,6 +149,16 @@ export default function Navbar() {
               {connectionStatus === 'connected' ? 'LIVE' : connectionStatus}
             </span>
           </div>
+
+          {/* Dedicated Demo Video Incident Report Alert Trigger */}
+          <button
+            onClick={() => setShowDemoAlert(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-950/90 hover:bg-rose-900 border border-rose-500/60 text-rose-300 text-[11px] font-mono font-bold shadow-[0_0_12px_rgba(255,51,102,0.4)] transition-all cursor-pointer animate-pulse"
+            title="Open Demo Incident Report & Alert"
+          >
+            <Bell className="w-3.5 h-3.5 text-rose-400 fill-current" />
+            <span className="hidden sm:inline">DEMO ALERT</span>
+          </button>
         </div>
       </div>
 
@@ -171,6 +183,12 @@ export default function Navbar() {
           )
         })}
       </nav>
+
+      {/* Demo Report & Alert Modal */}
+      <DemoReportAlertModal 
+        isOpen={showDemoAlert} 
+        onClose={() => setShowDemoAlert(false)} 
+      />
     </header>
   )
 }

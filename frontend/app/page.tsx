@@ -1,14 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import PulseStrip from '@/components/PulseStrip'
 import AgentRail from '@/components/AgentRail'
 import CascadeFeed from '@/components/CascadeFeed'
 import ZoneHeatmap from '@/components/ZoneHeatmap'
+import DemoReportAlertModal from '@/components/DemoReportAlertModal'
 import Link from 'next/link'
 import { Button } from '@/components/ui/8bit/button'
-import { AlertTriangle, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, ShieldCheck, Bell } from 'lucide-react'
 
 export default function CommandCentrePage() {
+  const [showDemoAlert, setShowDemoAlert] = useState(false)
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Top Banner with Title & Quick Action buttons */}
@@ -31,6 +34,16 @@ export default function CommandCentrePage() {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Dedicated Demo Video Incident Report Alert Trigger */}
+          <button 
+            onClick={() => setShowDemoAlert(true)}
+            className="px-3 py-1.5 bg-[#ff3366] hover:bg-[#ff1a53] text-black font-pixel text-[9px] uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_#000] flex items-center gap-1.5 animate-pulse cursor-pointer transition-all hover:translate-x-0.5 hover:translate-y-0.5"
+            title="Trigger Simulated Critical Incident Report Alert for Demo Video"
+          >
+            <Bell className="w-3.5 h-3.5 fill-current" />
+            <span>🚨 DEMO ALERT &amp; REPORT</span>
+          </button>
+
           <Link href="/simulate">
             <Button variant="amber" size="sm">
               <AlertTriangle className="w-3.5 h-3.5" />
@@ -57,6 +70,12 @@ export default function CommandCentrePage() {
 
       {/* Live Autonomous Decision Cascade Stream */}
       <CascadeFeed />
+
+      {/* Demo Incident Report & Alert Modal */}
+      <DemoReportAlertModal 
+        isOpen={showDemoAlert} 
+        onClose={() => setShowDemoAlert(false)} 
+      />
     </div>
   )
 }
