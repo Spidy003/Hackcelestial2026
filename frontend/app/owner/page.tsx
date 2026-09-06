@@ -12,7 +12,7 @@ import {
   Check, X, Sparkles, Zap, Bell, ShieldAlert,
   Flame, Building2, Users, UserCheck, Package, ShoppingCart,
   Plus, Minus, RefreshCw, Layers, Eye, ArrowLeft,
-  Compass, MapPin
+  Compass, MapPin, Sun, Moon
 } from 'lucide-react'
 import { useOwnerTheme } from '@/lib/owner-theme'
 import Retro8BitcnWidget from '@/components/Retro8BitcnWidget'
@@ -1663,17 +1663,17 @@ export default function OwnerDashboardPage() {
                 ? 'bg-[#c6ff00] text-black font-cyber-display text-[10px] font-black rounded-full shadow-[0_0_15px_rgba(198,255,0,0.4)] hover:bg-[#d8ff33]'
                 : 'rounded-full text-[11px] bg-slate-900 text-white hover:bg-black border border-slate-700 shadow-xs'
             }`}
-            title="Switch between Dark Theme and Executive UI"
+            title="Switch between Light Dashboard and Dark Theme"
           >
             {isCyberpunk ? (
               <>
-                <span className="text-black font-bold">🌙</span>
+                <Moon className="w-3.5 h-3.5 text-black" />
                 <span>DARK THEME</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                <span>👔 EXECUTIVE VIEW</span>
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+                <span>LIGHT DASHBOARD</span>
               </>
             )}
           </button>

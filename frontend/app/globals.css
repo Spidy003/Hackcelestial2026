@@ -193,26 +193,35 @@ body {
 }
 
 /* ============================================================
-   WHITE RETRO 8BITCN THEME (EXACT MATCH TO USER REFERENCE IMAGE)
-   - Pure crisp white canvas (#FFFFFF)
-   - Thick solid black borders (3px #000)
-   - Hard drop shadows (4px 4px 0px #000)
-   - Chamfered pill buttons ("Button", "EASY", "NORMAL", "HARD")
-   - High-contrast black text (#000000)
-   - Red health/progress bars
+   LIGHT DASHBOARD OPERATIONS THEME (MATCHING OWNER PORTAL)
+   - Soft off-white / light slate canvas (#f0f3f8)
+   - Soft neumorphic extruded cards (6px 6px 14px #d1d9e6, -6px -6px 14px #ffffff)
+   - Clean, readable sans-serif typography (no jagged pixel fonts)
+   - Vibrant electric blue pill accents & badges
+   - Simple, user-friendly, and modern aesthetic
    ============================================================ */
 
 .theme-white {
-  background-color: #ffffff !important;
-  color: #000000 !important;
+  background-color: #f0f3f8 !important;
+  color: #1e293b !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', 'Helvetica Neue', Arial, sans-serif !important;
 }
 
 .theme-white body {
-  background-color: #ffffff !important;
-  color: #000000 !important;
+  background-color: #f0f3f8 !important;
+  color: #1e293b !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', 'Helvetica Neue', Arial, sans-serif !important;
 }
 
-/* Cards & Panels in White Theme */
+/* Typography reset for clean readability in Light Theme */
+.theme-white .font-pixel,
+.theme-white .font-mono-data,
+.theme-white .font-retro-data {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif !important;
+  letter-spacing: normal !important;
+}
+
+/* Cards & Panels in Light Theme (Soft Neumorphic) */
 .theme-white .pixel-box,
 .theme-white .pixel-box-green,
 .theme-white .pixel-box-cyan,
@@ -224,157 +233,172 @@ body {
 .theme-white div[class*="bg-[#06161f]"],
 .theme-white div[class*="bg-[#191406]"],
 .theme-white div[class*="bg-[#1c080e]"] {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 3px solid #000000 !important;
-  box-shadow: 4px 4px 0px #000000 !important;
+  background-color: #f0f3f8 !important;
+  color: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  border-radius: 18px !important;
+  box-shadow: 6px 6px 14px #d1d9e6, -6px -6px 14px #ffffff !important;
 }
 
-/* Inner boxes */
+/* Inner boxes & child containers */
 .theme-white div[class*="bg-black"],
 .theme-white div[class*="bg-[#0c1318]"],
 .theme-white div[class*="bg-[#07131a]"],
 .theme-white div[class*="bg-[#16232d]"] {
   background-color: #f8fafc !important;
-  color: #000000 !important;
-  border-color: #000000 !important;
+  color: #1e293b !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 2px 2px 6px rgba(209, 217, 230, 0.4) !important;
 }
 
-/* Text overrides in White Theme */
+/* Text overrides in Light Theme */
 .theme-white h1,
 .theme-white h2,
 .theme-white h3,
-.theme-white h4,
+.theme-white h4 {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
 .theme-white .text-white,
 .theme-white .text-slate-100,
 .theme-white .text-slate-200 {
-  color: #000000 !important;
+  color: #1e293b !important;
 }
 
 .theme-white .text-slate-400,
 .theme-white .text-slate-500 {
-  color: #475569 !important;
+  color: #64748b !important;
 }
 
-/* Numbers & Highlights in White Theme */
+/* Numbers & Highlights in Light Theme */
 .theme-white span[class*="text-[#00ff66]"],
 .theme-white div[class*="text-[#00ff66]"],
 .theme-white p[class*="text-[#00ff66]"] {
-  color: #047857 !important; /* High-contrast retro dark emerald */
+  color: #059669 !important; /* Clean emerald */
 }
 
 .theme-white span[class*="text-[#00f0ff]"],
 .theme-white div[class*="text-[#00f0ff]"],
 .theme-white p[class*="text-[#00f0ff]"] {
-  color: #0284c7 !important; /* High-contrast retro cyan */
+  color: #2563eb !important; /* Vibrant royal blue */
 }
 
 .theme-white span[class*="text-[#ffb703]"],
 .theme-white div[class*="text-[#ffb703]"],
 .theme-white p[class*="text-[#ffb703]"] {
-  color: #b45309 !important; /* High-contrast retro amber */
+  color: #d97706 !important; /* Warm amber */
 }
 
 .theme-white span[class*="text-[#ff3366]"],
 .theme-white div[class*="text-[#ff3366]"],
 .theme-white p[class*="text-[#ff3366]"] {
-  color: #be123c !important; /* High-contrast retro ruby red */
+  color: #dc2626 !important; /* Clean rose red */
 }
 
-/* Buttons in White Theme (Exact pill/capsule style from reference image) */
+/* Buttons in Light Theme */
 .theme-white .pixel-btn,
 .theme-white button {
-  border-radius: 14px !important;
-  border: 2px solid #000000 !important;
-  box-shadow: 3px 3px 0px #000000 !important;
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  font-weight: bold;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 3px 3px 8px #d1d9e6, -3px -3px 8px #ffffff !important;
+  background-color: #f0f3f8 !important;
+  color: #1e293b !important;
+  font-weight: 600 !important;
 }
 
 .theme-white button:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
 }
 
-/* Dark action buttons (like "NORMAL", "Login", "CHAOS LAB") */
+/* Primary Action Buttons (like "CHAOS LAB", "DECISION LEDGER", green/amber pills) */
 .theme-white .btn-black,
 .theme-white button[class*="bg-[#ffb703]"],
 .theme-white button[class*="bg-[#00ff66]"] {
-  background-color: #000000 !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
-  border-radius: 14px !important;
-  box-shadow: 3px 3px 0px #000000 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
 }
 
 .theme-white button[class*="bg-[#ffb703]"]:hover,
 .theme-white button[class*="bg-[#00ff66]"]:hover {
-  background-color: #1e293b !important;
+  background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
   color: #ffffff !important;
 }
 
-/* Badges in White Theme */
+/* Badges in Light Theme */
 .theme-white .pixel-badge,
 .theme-white span[class*="font-pixel text-[8px]"],
 .theme-white span[class*="font-pixel text-[7px]"] {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 2px solid #000000 !important;
-  border-radius: 8px !important;
-  box-shadow: 2px 2px 0px #000000 !important;
+  background-color: #e2e8f0 !important;
+  color: #1e293b !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
 }
 
-/* Sidebar in White Theme */
+/* Sidebar in Light Theme */
 .theme-white aside {
-  background-color: #ffffff !important;
-  border-right: 3px solid #000000 !important;
-  box-shadow: 4px 0px 0px #000000 !important;
+  background-color: #f0f3f8 !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 4px 0px 16px rgba(209, 217, 230, 0.4) !important;
 }
 
 .theme-white header {
-  background-color: #ffffff !important;
-  border-bottom: 3px solid #000000 !important;
+  background-color: #f0f3f8 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(209, 217, 230, 0.3) !important;
 }
 
-/* Navigation items in White Theme */
+/* Navigation items in Light Theme */
 .theme-white a[class*="bg-[#00ff66]"] {
-  background-color: #000000 !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
-  border-radius: 10px !important;
-  box-shadow: 3px 3px 0px #000000 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
 }
 
 .theme-white a[class*="bg-[#0e161c]"] {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 2px solid #000000 !important;
-  border-radius: 10px !important;
+  background-color: transparent !important;
+  color: #475569 !important;
+  border: none !important;
+  border-radius: 12px !important;
 }
 
 .theme-white a[class*="bg-[#0e161c]"]:hover {
-  background-color: #f1f5f9 !important;
+  background-color: rgba(37, 99, 235, 0.08) !important;
+  color: #2563eb !important;
 }
 
-/* Tables in White Theme */
+/* Tables in Light Theme */
 .theme-white table {
   background-color: #ffffff !important;
-  border: 3px solid #000000 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  box-shadow: 4px 4px 14px rgba(209, 217, 230, 0.35) !important;
+  overflow: hidden !important;
 }
 
 .theme-white thead {
-  background-color: #000000 !important;
-  color: #ffffff !important;
+  background-color: #f8fafc !important;
+  color: #334155 !important;
 }
 
 .theme-white thead th {
-  color: #ffffff !important;
-  border-color: #000000 !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+  font-weight: 700 !important;
 }
 
 .theme-white tbody tr {
   background-color: #ffffff !important;
-  border-color: #000000 !important;
+  border-color: #f1f5f9 !important;
 }
 
 .theme-white tbody tr:hover {
@@ -382,68 +406,60 @@ body {
 }
 
 .theme-white tbody td {
-  color: #000000 !important;
-  border-color: #000000 !important;
+  color: #1e293b !important;
+  border-color: #f1f5f9 !important;
 }
 
-/* Inputs in White Theme (Exact to "Enter text" and email input in image) */
+/* Inputs in Light Theme */
 .theme-white input {
   background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 2px solid #000000 !important;
-  border-radius: 8px !important;
-  box-shadow: 2px 2px 0px #000000 inset !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
 
 .theme-white input::placeholder {
-  color: #64748b !important;
+  color: #94a3b8 !important;
 }
 
-/* Progress / Health Bars in White Theme (Exact red segmented bar from reference image) */
+/* Progress Bars in Light Theme */
 .theme-white .pixel-progress-bg {
-  background-color: #ffffff !important;
-  border: 2px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 1px 1px 0px #000000 inset !important;
+  background-color: #e2e8f0 !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.08) !important;
+  overflow: hidden !important;
 }
 
-.theme-white .pixel-progress-bar-green,
-.theme-white .pixel-progress-bar-cyan,
-.theme-white .pixel-progress-bar-amber,
+.theme-white .pixel-progress-bar-green {
+  background: linear-gradient(90deg, #10b981, #059669) !important;
+  border: none !important;
+}
+
+.theme-white .pixel-progress-bar-cyan {
+  background: linear-gradient(90deg, #38bdf8, #0284c7) !important;
+  border: none !important;
+}
+
+.theme-white .pixel-progress-bar-amber {
+  background: linear-gradient(90deg, #fbbf24, #d97706) !important;
+  border: none !important;
+}
+
 .theme-white .pixel-progress-bar-red {
-  background: repeating-linear-gradient(
-    90deg,
-    #dc2626 0px,
-    #dc2626 7px,
-    #000000 7px,
-    #000000 9px
-  ) !important;
-  border-right: 2px solid #000000 !important;
-}
-
-/* Ensure black buttons stay black in theme-white */
-.theme-white button[class*="bg-black"],
-.theme-white button.bg-black,
-.theme-white .bg-black {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-}
-
-.theme-white button[class*="bg-black"]:hover,
-.theme-white button.bg-black:hover {
-  background-color: #1a1a1a !important;
-  color: #ffffff !important;
+  background: linear-gradient(90deg, #f87171, #dc2626) !important;
+  border: none !important;
 }
 
 /* Clean retro scrollbars */
 .theme-white ::-webkit-scrollbar-track {
-  background: #ffffff;
-  border-left: 2px solid #000000;
+  background: #f0f3f8;
 }
 
 .theme-white ::-webkit-scrollbar-thumb {
-  background: #000000;
-  border: 1px solid #000000;
+  background: #cbd5e1;
+  border-radius: 9999px;
 }
 
 /* ============================================================

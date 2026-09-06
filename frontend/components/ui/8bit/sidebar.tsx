@@ -106,15 +106,16 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-2">
           <Link
             href="/owner"
-            className="font-pixel text-[8px] px-2 py-1 border-2 border-black rounded-full uppercase shadow-[2px_2px_0px_#000] bg-[#ffb703] text-black hover:bg-[#ffc53d] cursor-pointer"
+            className="text-[10px] px-2.5 py-1 rounded-full uppercase font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs transition-colors"
           >
-            Owner view
+            Owner view →
           </Link>
           <button
             onClick={() => setTheme(theme === 'white' ? 'dark' : 'white')}
-            className="font-pixel text-[8px] px-2 py-1 border-2 border-black rounded-full uppercase shadow-[2px_2px_0px_#000] bg-white text-black hover:bg-slate-100 cursor-pointer"
+            className="text-xs px-2 py-1 rounded-full border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 cursor-pointer shadow-xs flex items-center gap-1 font-bold"
+            title="Switch theme"
           >
-            {theme === 'white' ? '☀️' : '🌙'}
+            {theme === 'white' ? '☀️ Light' : '🌙 Dark'}
           </button>
           <Badge variant={connectionStatus === 'connected' ? 'green' : 'red'}>
             {connectionStatus === 'connected' ? 'LIVE' : 'OFFLINE'}
@@ -174,54 +175,88 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* View Switcher: Operations view vs Owner view */}
-          <div className="p-2.5 mx-3 mt-3 bg-[#0a1014] border-2 border-black shadow-[3px_3px_0px_#000]">
+          <div className={`p-2.5 mx-3 mt-3 rounded-2xl transition-all ${
+            theme === 'white'
+              ? 'neumorph-card bg-[#f0f3f8] border border-white/80 shadow-[4px_4px_10px_#d1d9e6,-4px_-4px_10px_#ffffff]'
+              : 'bg-[#0a1014] border-2 border-black shadow-[3px_3px_0px_#000]'
+          }`}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="font-pixel text-[8px] text-slate-400 uppercase tracking-wider">PORTAL VIEW</span>
-              <span className="font-pixel text-[7px] text-[#00ff66]">ACTIVE</span>
+              <span className={`text-[9px] uppercase tracking-wider font-bold ${
+                theme === 'white' ? 'text-slate-500 font-sans' : 'font-pixel text-[8px] text-slate-400'
+              }`}>
+                PORTAL VIEW
+              </span>
+              <span className={`text-[8px] font-bold ${
+                theme === 'white' ? 'text-blue-600 font-sans' : 'font-pixel text-[7px] text-[#00ff66]'
+              }`}>
+                ACTIVE
+              </span>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
-              <div className="py-1 px-1.5 text-center rounded-full border-2 border-black font-pixel text-[8px] bg-black text-[#00ff66] shadow-[2px_2px_0px_#000] select-none font-bold">
+              <div className={`py-1.5 px-2 text-center rounded-xl font-bold text-xs select-none transition-all ${
+                theme === 'white'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'border-2 border-black font-pixel text-[8px] bg-black text-[#00ff66] shadow-[2px_2px_0px_#000]'
+              }`}>
                 Operations
               </div>
               <Link
                 href="/owner"
-                className="py-1 px-1.5 text-center rounded-full border-2 border-black font-pixel text-[8px] bg-white text-black hover:bg-slate-100 transition-all shadow-[2px_2px_0px_#000] font-bold"
+                className={`py-1.5 px-2 text-center rounded-xl font-bold text-xs transition-all ${
+                  theme === 'white'
+                    ? 'bg-white text-slate-700 hover:text-blue-600 shadow-sm border border-slate-200'
+                    : 'border-2 border-black font-pixel text-[8px] bg-white text-black hover:bg-slate-100 shadow-[2px_2px_0px_#000]'
+                }`}
               >
-                Owner view
+                Owner view →
               </Link>
             </div>
           </div>
 
-          {/* UI Theme Selector (Exact Pill Styling from Reference Image) */}
-          <div className="p-3 m-3 mb-2 bg-[#07131a] border-2 border-black shadow-[3px_3px_0px_#000]">
+          {/* UI Theme Selector: Light Dashboard (like Owner) vs Dark Mode */}
+          <div className={`p-3 mx-3 my-2 rounded-2xl transition-all ${
+            theme === 'white'
+              ? 'neumorph-card bg-[#f0f3f8] border border-white/80 shadow-[4px_4px_10px_#d1d9e6,-4px_-4px_10px_#ffffff]'
+              : 'bg-[#07131a] border-2 border-black shadow-[3px_3px_0px_#000]'
+          }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="font-pixel text-[8px] text-slate-400 uppercase tracking-wider">
-                UI THEME
+              <span className={`text-[9px] uppercase tracking-wider font-bold ${
+                theme === 'white' ? 'text-slate-500 font-sans' : 'font-pixel text-[8px] text-slate-400'
+              }`}>
+                DASHBOARD THEME
               </span>
-              <span className="font-pixel text-[7px] text-[#00f0ff]">
-                {theme === 'white' ? '8-BIT WHITE' : 'DARK'}
+              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
+                theme === 'white'
+                  ? 'bg-blue-100 text-blue-700 font-sans'
+                  : 'font-pixel text-[7px] text-[#00f0ff] bg-[#00f0ff]/10'
+              }`}>
+                {theme === 'white' ? '☀️ LIGHT' : '🌙 DARK'}
               </span>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 onClick={() => setTheme('white')}
-                className={`w-full py-1.5 px-3 rounded-full border-2 border-black font-pixel text-[8px] uppercase tracking-wider transition-all shadow-[2px_2px_0px_#000] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                className={`py-2 px-2.5 rounded-xl text-center font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   theme === 'white'
-                    ? 'bg-black text-white font-bold'
-                    : 'bg-white text-black hover:bg-slate-100 font-bold'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-[#0f171c] text-slate-300 hover:text-white border border-slate-700 text-[9px]'
                 }`}
+                title="Switch to Light Dashboard theme matching Owner Portal"
               >
-                WHITE 8-BIT
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+                <span>Light</span>
               </button>
               <button
                 onClick={() => setTheme('dark')}
-                className={`w-full py-1.5 px-3 rounded-full border-2 border-black font-pixel text-[8px] uppercase tracking-wider transition-all shadow-[2px_2px_0px_#000] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                className={`py-2 px-2.5 rounded-xl text-center font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   theme === 'dark'
-                    ? 'bg-black text-white font-bold'
-                    : 'bg-white text-black hover:bg-slate-100 font-bold'
+                    ? 'bg-black text-[#00ff66] border border-[#00ff66]/40 shadow-sm text-[9px]'
+                    : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200'
                 }`}
+                title="Switch to Dark Operations theme"
               >
-                DARK RETRO
+                <Moon className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Dark</span>
               </button>
             </div>
           </div>

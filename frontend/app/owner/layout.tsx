@@ -7,7 +7,8 @@ import { useResortStore } from '@/lib/store'
 import { OwnerThemeProvider, useOwnerTheme } from '@/lib/owner-theme'
 import { 
   Home, Calendar, Bell, Settings, LayoutDashboard, 
-  FileText, Menu, X, Sparkles, Layers, Zap, ShieldCheck
+  FileText, Menu, X, Sparkles, Layers, Zap, ShieldCheck,
+  Sun, Moon
 } from 'lucide-react'
 
 function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
@@ -66,13 +67,23 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
           {/* Theme switcher on mobile */}
           <button
             onClick={toggleTheme}
-            className={`px-3 py-1 text-[10px] font-bold uppercase cursor-pointer rounded-full transition-all ${
+            className={`px-3 py-1 text-[10px] font-bold uppercase cursor-pointer rounded-full transition-all flex items-center gap-1.5 ${
               isCyberpunk
                 ? 'bg-[#c6ff00] text-black font-cyber-display shadow-[0_0_15px_rgba(198,255,0,0.4)]'
                 : 'bg-slate-900 text-white border border-slate-700 shadow-xs'
             }`}
           >
-            {isCyberpunk ? '🌙 DARK THEME' : '👔 EXECUTIVE'}
+            {isCyberpunk ? (
+              <>
+                <Moon className="w-3 h-3 text-black" />
+                <span>DARK</span>
+              </>
+            ) : (
+              <>
+                <Sun className="w-3 h-3 text-amber-400" />
+                <span>LIGHT</span>
+              </>
+            )}
           </button>
           <Link
             href="/"
@@ -82,7 +93,7 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
                 : 'bg-slate-200 text-slate-700 shadow-sm hover:bg-slate-300'
             }`}
           >
-            Ops
+            Ops →
           </Link>
         </div>
       </header>
@@ -138,24 +149,33 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
           {/* Theme Switcher Button directly in Sidebar */}
           <button
             onClick={toggleTheme}
-            className={`w-full py-2.5 px-3 flex items-center justify-center gap-2 font-bold cursor-pointer rounded-xl transition-all duration-150 ${
+            className={`w-full py-2.5 px-3 flex items-center justify-between font-bold cursor-pointer rounded-2xl transition-all duration-150 ${
               isCyberpunk
-                ? 'cyber-pill-lime text-[10px]'
+                ? 'bg-[#121822] text-[#c6ff00] border border-[#c6ff00]/40 text-[11px] shadow-[0_0_12px_rgba(198,255,0,0.2)] hover:border-[#c6ff00]'
                 : 'neumorph-btn text-slate-800 text-xs hover:text-blue-600'
             }`}
-            title="Toggle between Dark Theme and Executive UI"
+            title="Toggle between Light Dashboard and Dark Theme"
           >
-            {isCyberpunk ? (
-              <>
-                <span className="text-black font-bold">🌙</span>
-                <span className="font-cyber-display">DARK THEME</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>👔 EXECUTIVE VIEW</span>
-              </>
-            )}
+            <div className="flex items-center gap-2">
+              {isCyberpunk ? (
+                <>
+                  <Moon className="w-4 h-4 text-[#c6ff00]" />
+                  <span className="font-cyber-display text-[11px] tracking-wide">DARK THEME</span>
+                </>
+              ) : (
+                <>
+                  <Sun className="w-4 h-4 text-amber-500" />
+                  <span className="font-bold text-slate-900 text-xs">LIGHT DASHBOARD</span>
+                </>
+              )}
+            </div>
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full transition-colors ${
+              isCyberpunk
+                ? 'bg-[#c6ff00]/20 text-[#c6ff00] border border-[#c6ff00]/30'
+                : 'bg-blue-100 text-blue-700 border border-blue-200'
+            }`}>
+              SWITCH ⇄
+            </span>
           </button>
 
           {/* Quick Action Chips */}
@@ -182,30 +202,30 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
 
           {/* View Switcher: Owner vs Operations */}
           <div
-            className={`p-1 flex items-center justify-between rounded-xl gap-1 ${
+            className={`p-1 flex items-center justify-between rounded-2xl gap-1 ${
               isCyberpunk
-                ? 'bg-[#090d13] border border-[#c6ff00]/25 rounded-xl'
-                : 'neumorph-inset rounded-2xl'
+                ? 'bg-[#090d13] border border-[#c6ff00]/25'
+                : 'neumorph-inset'
             }`}
           >
             <span
-              className={`flex-1 py-1 text-center font-semibold text-xs rounded-lg ${
+              className={`flex-1 py-1.5 text-center font-bold text-xs rounded-xl transition-all ${
                 isCyberpunk
                   ? 'bg-[#c6ff00] text-black font-cyber-display font-bold text-[10px] shadow-[0_0_10px_rgba(198,255,0,0.3)]'
-                  : 'rounded-xl bg-white shadow-sm text-blue-700'
+                  : 'bg-white shadow-sm text-blue-700'
               }`}
             >
               Owner view
             </span>
             <Link
               href="/"
-              className={`flex-1 py-1 text-center font-medium text-xs rounded-lg transition-colors ${
+              className={`flex-1 py-1.5 text-center font-semibold text-xs rounded-xl transition-all ${
                 isCyberpunk
                   ? 'text-slate-400 hover:text-[#c6ff00] font-cyber text-[10px]'
-                  : 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-600 hover:text-blue-700 hover:bg-white/60'
               }`}
             >
-              Operations
+              Operations →
             </Link>
           </div>
 
