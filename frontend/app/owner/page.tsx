@@ -382,7 +382,8 @@ function WeekRevenueStandingGraph({
 
 // ════════════════════════════════════════════════════════════════
 // 7-Day Stress Trend Multi-Layered Wave Mountain Graph ("Crazy Graph")
-// Matches purple/violet multi-wave layered style with vertical column bands and glowing circular node rings
+// Matches UI Theme (Neon Lime & Cyan in Dark Mode / Ocean Blue in Light Mode)
+// Easy and simple to understand: 7 clear days with glowing circular nodes
 // ════════════════════════════════════════════════════════════════
 interface StressTrendWaveGraphProps {
   currentStress: number
@@ -395,208 +396,209 @@ function StressTrendWaveGraph({
   isCyberpunk = true,
   className = '',
 }: StressTrendWaveGraphProps) {
-  // 15 vertical column bands across width
-  const columnCount = 15
-  const columnWidth = 300 / columnCount
+  // 7 Days of the week (Mon to Sun)
+  // Clean, intuitive data points that are instantly understandable:
+  const days = [
+    { label: 'Mon 09', val: 38, isToday: false },
+    { label: 'Tue 10', val: 78, isToday: false },
+    { label: 'Wed 11', val: 62, isToday: false },
+    { label: 'Thu 12', val: 44, isToday: false },
+    { label: 'Fri 13', val: 72, isToday: false },
+    { label: 'Sat 14', val: 88, isToday: false }, // Peak
+    { label: 'Sun 15', val: currentStress, isToday: true }, // Live Today!
+  ]
 
-  // Summit peak scales dynamically with currentStress
-  const summitY = Math.max(4, Math.min(16, 20 - Math.round((currentStress / 100) * 16)))
+  // Column width for 7 days across 280 viewBox
+  const colW = 40
+  // Baseline is at y = 78, peak ceiling at y = 14
+  // y = 78 - (val / 100) * 62
+  const nodes = days.map((d, i) => {
+    const x = 20 + i * colW
+    const y = Math.max(12, Math.min(74, Math.round(78 - (d.val / 100) * 62)))
+    return { ...d, x, y }
+  })
+
+  // Points for smooth bezier path of Top Wave
+  const p = nodes
+  const topWavePath = `M 0,78 
+    L 0,${p[0].y + 6}
+    C 10,${p[0].y + 4} 15,${p[0].y} ${p[0].x},${p[0].y}
+    C 35,${p[0].y - 8} 45,${p[1].y + 10} ${p[1].x},${p[1].y}
+    C 75,${p[1].y - 8} 85,${p[2].y - 8} ${p[2].x},${p[2].y}
+    C 115,${p[2].y + 10} 125,${p[3].y + 8} ${p[3].x},${p[3].y}
+    C 155,${p[3].y - 8} 165,${p[4].y + 6} ${p[4].x},${p[4].y}
+    C 195,${p[4].y - 8} 205,${p[5].y + 2} ${p[5].x},${p[5].y}
+    C 235,${p[5].y + 6} 245,${p[6].y - 4} ${p[6].x},${p[6].y}
+    C 270,${p[6].y + 4} 276,${p[6].y + 8} 280,${p[6].y + 10}
+    L 280,78 Z`
+
+  const topStrokePath = `M 0,${p[0].y + 6}
+    C 10,${p[0].y + 4} 15,${p[0].y} ${p[0].x},${p[0].y}
+    C 35,${p[0].y - 8} 45,${p[1].y + 10} ${p[1].x},${p[1].y}
+    C 75,${p[1].y - 8} 85,${p[2].y - 8} ${p[2].x},${p[2].y}
+    C 115,${p[2].y + 10} 125,${p[3].y + 8} ${p[3].x},${p[3].y}
+    C 155,${p[3].y - 8} 165,${p[4].y + 6} ${p[4].x},${p[4].y}
+    C 195,${p[4].y - 8} 205,${p[5].y + 2} ${p[5].x},${p[5].y}
+    C 235,${p[5].y + 6} 245,${p[6].y - 4} ${p[6].x},${p[6].y}
+    C 270,${p[6].y + 4} 276,${p[6].y + 8} 280,${p[6].y + 10}`
+
+  // Secondary lower wave (Base facility load, 65% of peak)
+  const midWavePath = `M 0,78 
+    L 0,66
+    C 15,64 20,${Math.round(p[0].y * 0.5 + 36)} ${p[0].x},${Math.round(p[0].y * 0.5 + 36)}
+    C 45,58 50,${Math.round(p[1].y * 0.5 + 30)} ${p[1].x},${Math.round(p[1].y * 0.5 + 30)}
+    C 85,46 90,${Math.round(p[2].y * 0.5 + 34)} ${p[2].x},${Math.round(p[2].y * 0.5 + 34)}
+    C 125,56 130,${Math.round(p[3].y * 0.5 + 38)} ${p[3].x},${Math.round(p[3].y * 0.5 + 38)}
+    C 165,50 170,${Math.round(p[4].y * 0.5 + 32)} ${p[4].x},${Math.round(p[4].y * 0.5 + 32)}
+    C 205,42 210,${Math.round(p[5].y * 0.5 + 28)} ${p[5].x},${Math.round(p[5].y * 0.5 + 28)}
+    C 245,46 250,${Math.round(p[6].y * 0.5 + 32)} ${p[6].x},${Math.round(p[6].y * 0.5 + 32)}
+    C 270,58 276,64 280,68
+    L 280,78 Z`
 
   return (
     <div className={`w-full flex flex-col justify-between select-none ${className}`}>
       <div className="relative w-full h-20 sm:h-22 overflow-hidden rounded-sm">
         <svg 
           className="w-full h-full" 
-          viewBox="0 0 300 100" 
+          viewBox="0 0 280 82" 
           preserveAspectRatio="none"
         >
           <defs>
-            {/* Layer 1 (Top Wave) Gradient */}
-            <linearGradient id="purpleTopWaveGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#7e22ce" stopOpacity="0.95" />
-              <stop offset="50%" stopColor="#6b21a8" stopOpacity="0.85" />
-              <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.75" />
+            {/* Dark Mode: Neon Lime to Cyan Gradients */}
+            <linearGradient id="cyberWaveTop" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#c6ff00" stopOpacity="0.6" />
+              <stop offset="45%" stopColor="#00f5d4" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#0077b6" stopOpacity="0.05" />
             </linearGradient>
 
-            {/* Layer 2 (Middle Wave) Gradient */}
-            <linearGradient id="purpleMidWaveGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#a855f7" stopOpacity="0.75" />
-              <stop offset="100%" stopColor="#7e22ce" stopOpacity="0.45" />
+            <linearGradient id="cyberWaveMid" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#00f5d4" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#0077b6" stopOpacity="0.08" />
             </linearGradient>
 
-            {/* Layer 3 (Bottom Wave) Gradient */}
-            <linearGradient id="purpleBottomWaveGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#c084fc" stopOpacity="0.55" />
-              <stop offset="100%" stopColor="#a855f7" stopOpacity="0.25" />
+            {/* Light Mode: Royal Blue to Sky Cyan Gradients */}
+            <linearGradient id="lightWaveTop" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2563eb" stopOpacity="0.45" />
+              <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
             </linearGradient>
 
-            {/* Top Ridge Glow Filter */}
-            <filter id="purpleGlow" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#c084fc" floodOpacity="0.8" />
+            <linearGradient id="lightWaveMid" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#93c5fd" stopOpacity="0.05" />
+            </linearGradient>
+
+            {/* Neon Glow Filter */}
+            <filter id="waveNeonGlow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor={isCyberpunk ? "#c6ff00" : "#2563eb"} floodOpacity="0.8" />
             </filter>
           </defs>
 
-          {/* 1. Alternating Vertical Column Bands */}
-          {Array.from({ length: columnCount }).map((_, i) => (
+          {/* 1. 7 Vertical Day Column Bands */}
+          {days.map((d, i) => (
             <rect
               key={i}
-              x={i * columnWidth}
+              x={i * colW}
               y={0}
-              width={columnWidth}
-              height={96}
-              fill={i % 2 === 0 ? 'rgba(147, 51, 234, 0.05)' : 'rgba(147, 51, 234, 0.16)'}
-              stroke="rgba(192, 132, 252, 0.08)"
+              width={colW}
+              height={78}
+              fill={
+                isCyberpunk
+                  ? (d.isToday ? 'rgba(198, 255, 0, 0.08)' : (i % 2 === 0 ? 'rgba(0, 245, 212, 0.03)' : 'rgba(0, 245, 212, 0.07)'))
+                  : (d.isToday ? 'rgba(37, 99, 235, 0.08)' : (i % 2 === 0 ? 'rgba(241, 245, 249, 0.5)' : 'rgba(226, 232, 240, 0.6)'))
+              }
+              stroke={isCyberpunk ? (d.isToday ? 'rgba(198, 255, 0, 0.3)' : 'rgba(0, 245, 212, 0.1)') : 'rgba(203, 213, 225, 0.4)'}
               strokeWidth="0.5"
             />
           ))}
 
-          {/* 2. Layer 3: Bottom Lavender Wave */}
+          {/* 2. Secondary Wave Layer */}
           <path
-            d="M 0,96 L 0,82 C 15,80 25,66 40,66 C 60,66 70,76 85,76 C 105,76 120,62 138,62 C 155,62 165,74 180,74 C 195,74 210,64 225,64 C 240,64 255,74 270,74 C 285,74 295,84 300,88 L 300,96 Z"
-            fill="url(#purpleBottomWaveGrad)"
+            d={midWavePath}
+            fill={isCyberpunk ? 'url(#cyberWaveMid)' : 'url(#lightWaveMid)'}
           />
 
-          {/* 3. Layer 2: Middle Violet Wave */}
+          {/* 3. Primary Wave Mountain Layer */}
           <path
-            d="M 0,96 L 0,60 C 15,56 26,44 42,44 C 58,44 70,54 88,54 C 106,54 118,38 136,38 C 154,38 165,52 182,52 C 198,52 210,40 228,40 C 244,40 258,54 274,54 C 288,54 296,66 300,70 L 300,96 Z"
-            fill="url(#purpleMidWaveGrad)"
+            d={topWavePath}
+            fill={isCyberpunk ? 'url(#cyberWaveTop)' : 'url(#lightWaveTop)'}
           />
 
-          {/* 4. Layer 1: Top Deep Purple Dramatic "Crazy" Wave */}
+          {/* Glowing Ridge Line */}
           <path
-            d={`M 0,96 L 0,42 
-               C 8,32 14,24 24,24 
-               C 34,24 40,36 48,36 
-               C 58,36 68,14 80,14 
-               C 92,14 100,32 110,32 
-               C 122,32 130,22 142,22 
-               C 152,22 162,38 172,38 
-               C 178,38 182,${summitY} 190,${summitY} 
-               C 198,${summitY} 204,30 214,30 
-               C 224,30 234,16 244,16 
-               C 254,16 262,40 272,40 
-               C 280,40 286,34 292,34 
-               C 296,34 298,55 300,60 
-               L 300,96 Z`}
-            fill="url(#purpleTopWaveGrad)"
-          />
-
-          {/* Glowing Top Ridge Stroke */}
-          <path
-            d={`M 0,42 
-               C 8,32 14,24 24,24 
-               C 34,24 40,36 48,36 
-               C 58,36 68,14 80,14 
-               C 92,14 100,32 110,32 
-               C 122,32 130,22 142,22 
-               C 152,22 162,38 172,38 
-               C 178,38 182,${summitY} 190,${summitY} 
-               C 198,${summitY} 204,30 214,30 
-               C 224,30 234,16 244,16 
-               C 254,16 262,40 272,40 
-               C 280,40 286,34 292,34 
-               C 296,34 298,55 300,60`}
+            d={topStrokePath}
             fill="none"
-            stroke="#d8b4fe"
-            strokeWidth="2.5"
-            filter="url(#purpleGlow)"
+            stroke={isCyberpunk ? '#c6ff00' : '#2563eb'}
+            strokeWidth="2.2"
+            filter="url(#waveNeonGlow)"
           />
 
-          {/* 5. Circular Nodes (White ring with purple center) */}
-          {/* Layer 3 Nodes */}
-          {[
-            { x: 40, y: 66 },
-            { x: 138, y: 62 },
-            { x: 225, y: 64 },
-          ].map((n, idx) => (
-            <g key={`l3-${idx}`}>
-              <circle cx={n.x} cy={n.y} r="3" fill="#ffffff" stroke="#7e22ce" strokeWidth="1" opacity="0.85" />
-              <circle cx={n.x} cy={n.y} r="1" fill="#a855f7" />
-            </g>
-          ))}
-
-          {/* Layer 2 Nodes */}
-          {[
-            { x: 42, y: 44 },
-            { x: 88, y: 54 },
-            { x: 136, y: 38 },
-            { x: 182, y: 52 },
-            { x: 228, y: 40 },
-            { x: 274, y: 54 },
-          ].map((n, idx) => (
-            <g key={`l2-${idx}`}>
-              <circle cx={n.x} cy={n.y} r="3.2" fill="#ffffff" stroke="#6b21a8" strokeWidth="1.2" opacity="0.9" />
-              <circle cx={n.x} cy={n.y} r="1.2" fill="#7e22ce" />
-            </g>
-          ))}
-
-          {/* Layer 1 Nodes (Peaks and Inflections on Top Wave) */}
-          {[
-            { x: 24, y: 24 },
-            { x: 48, y: 36 },
-            { x: 80, y: 14 },
-            { x: 110, y: 32 },
-            { x: 142, y: 22 },
-            { x: 172, y: 38 },
-            { x: 190, y: summitY, isSummit: true },
-            { x: 214, y: 30 },
-            { x: 244, y: 16 },
-            { x: 272, y: 40 },
-            { x: 292, y: 34 },
-          ].map((n, idx) => (
-            <g key={`l1-${idx}`}>
-              {n.isSummit && (
+          {/* 4. Circular Milestone Node Rings on the 7 Days */}
+          {nodes.map((n, idx) => (
+            <g key={idx} className="cursor-pointer">
+              {/* Pulsing Beacon Ring on Today */}
+              {n.isToday && (
                 <circle 
                   cx={n.x} 
                   cy={n.y} 
-                  r="6" 
+                  r="6.5" 
                   fill="none" 
-                  stroke="#c084fc" 
+                  stroke={isCyberpunk ? '#c6ff00' : '#2563eb'} 
                   strokeWidth="1.5" 
                   className="animate-ping origin-center" 
-                  opacity="0.75" 
+                  opacity="0.8" 
                 />
               )}
+              {/* Outer Ring */}
               <circle 
                 cx={n.x} 
                 cy={n.y} 
-                r={n.isSummit ? 4.5 : 3.5} 
+                r={n.isToday ? 4.5 : 3.5} 
                 fill="#ffffff" 
-                stroke="#581c87" 
-                strokeWidth="1.5" 
-                style={{ filter: 'drop-shadow(0 0 4px rgba(216,180,254,0.9))' }} 
+                stroke={isCyberpunk ? (n.isToday ? '#c6ff00' : '#00f5d4') : '#2563eb'} 
+                strokeWidth={n.isToday ? 2 : 1.5} 
+                style={{ 
+                  filter: isCyberpunk 
+                    ? 'drop-shadow(0 0 4px rgba(198,255,0,0.9))' 
+                    : 'drop-shadow(0 0 3px rgba(37,99,235,0.4))' 
+                }} 
               />
+              {/* Center Dot */}
               <circle 
                 cx={n.x} 
                 cy={n.y} 
-                r={n.isSummit ? 2 : 1.5} 
-                fill={n.isSummit ? '#c084fc' : '#6b21a8'} 
+                r={n.isToday ? 2 : 1.5} 
+                fill={isCyberpunk ? (n.isToday ? '#c6ff00' : '#00f5d4') : '#2563eb'} 
               />
             </g>
           ))}
 
-          {/* Baseline horizontal line */}
-          <line x1="0" y1="96" x2="300" y2="96" stroke="rgba(192,132,252,0.4)" strokeWidth="1" />
+          {/* Baseline Divider */}
+          <line 
+            x1="0" 
+            y1="78" 
+            x2="280" 
+            y2="78" 
+            stroke={isCyberpunk ? 'rgba(198, 255, 0, 0.3)' : 'rgba(203, 213, 225, 0.8)'} 
+            strokeWidth="1" 
+          />
         </svg>
       </div>
 
-      {/* 15 Column Labels under graph */}
-      <div className="flex justify-between items-center px-1 mt-1 pt-0.5 border-t border-purple-500/20 text-[7.5px] font-mono font-bold text-purple-400">
-        <span>01</span>
-        <span>02</span>
-        <span>03</span>
-        <span>04</span>
-        <span>05</span>
-        <span>06</span>
-        <span>07</span>
-        <span>08</span>
-        <span>09</span>
-        <span>10</span>
-        <span>11</span>
-        <span>12</span>
-        <span>13</span>
-        <span>14</span>
-        <span>15</span>
+      {/* 7 Clean Day Column Labels Under Graph */}
+      <div className="flex justify-between items-center px-1 mt-1 pt-0.5 border-t border-slate-200/40 text-[7.5px] font-mono font-bold">
+        {days.map((d, i) => (
+          <span 
+            key={i} 
+            className={`w-[36px] text-center leading-none ${
+              d.isToday 
+                ? (isCyberpunk ? 'text-[#c6ff00] font-black' : 'text-blue-700 font-black') 
+                : (isCyberpunk ? 'text-slate-400' : 'text-slate-500')
+            }`}
+          >
+            {d.label}
+          </span>
+        ))}
       </div>
     </div>
   )
