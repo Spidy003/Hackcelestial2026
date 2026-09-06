@@ -67,6 +67,17 @@ const AGENT_CONFIGS: Record<string, { label: string; icon: any; model: string; r
   },
 }
 
+const AGENT_DEFAULT_COUNTS: Record<string, number> = {
+  demand: 14,
+  staffing: 16,
+  maintenance: 12,
+  fnb: 18,
+  concierge: 22,
+  service_recovery: 15,
+  personalization: 19,
+  segmentation: 11,
+}
+
 export default function AgentRail() {
   const { agents } = useResortStore()
   const agentKeys = Object.keys(AGENT_CONFIGS)
@@ -93,7 +104,7 @@ export default function AgentRail() {
             name: key,
             running: true,
             model_loaded: true,
-            decision_count: Math.floor(Math.random() * 12) + 8,
+            decision_count: AGENT_DEFAULT_COUNTS[key] || 14,
             last_decision_title: cfg.lastRealAction,
             last_confidence: 0.94,
           }

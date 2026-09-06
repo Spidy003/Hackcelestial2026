@@ -127,7 +127,7 @@ const DEFAULT_KPIS: KPIs = {
 }
 
 const DEFAULT_CLOCK: ClockState = {
-  sim_now: new Date().toISOString(), speed: '10x',
+  sim_now: '2026-09-08T14:00:00.000Z', speed: '10x',
   sim_minutes_per_tick: 30, paused: false, tick_count: 0,
 }
 

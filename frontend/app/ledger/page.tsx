@@ -185,7 +185,7 @@ export default function LedgerPage() {
                     <Badge variant="cyan">{dec.agent}</Badge>
                     <Badge variant="green">{dec.id}</Badge>
                     {dec.cascade_id && <Badge variant="purple">{dec.cascade_id}</Badge>}
-                    <span className="font-mono-data text-[11px] text-slate-400">
+                    <span suppressHydrationWarning className="font-mono-data text-[11px] text-slate-400">
                       {formatSimTime(dec.ts)}
                     </span>
                   </div>
