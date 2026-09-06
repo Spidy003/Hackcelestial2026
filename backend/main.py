@@ -146,7 +146,7 @@ async def lifespan(app: FastAPI):
     # 7. Start clock
     await clock.start()
     app.state.clock = clock
-    logger.info("🚀 Smart Resort 360 is live. sim_now=%s", clock.sim_now)
+    logger.info("🚀 Resorva is live. sim_now=%s", clock.sim_now)
 
     yield
 
@@ -392,7 +392,7 @@ def _refresh_generator_state(generators) -> None:
 # ------------------------------------------------------------------ #
 
 app = FastAPI(
-    title="Smart Resort 360",
+    title="Resorva & ResortierAi",
     description="AI-powered resort operations platform — Hackcelestial 3.0",
     version="1.0.0",
     lifespan=lifespan,
@@ -513,7 +513,7 @@ async def _build_snapshot() -> dict:
 async def root():
     from backend.core.clock import clock
     return {
-        "name": "Smart Resort 360 Operations Platform API",
+        "name": "Resorva & ResortierAi Operations Platform API",
         "status": "online",
         "sim_now": clock.sim_now.isoformat(),
         "health": "/health",

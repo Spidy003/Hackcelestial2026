@@ -246,7 +246,7 @@ export default function OwnerWeeklySummaryPage() {
               </span>
             </div>
             <h1 className="font-bold text-sm sm:text-base text-slate-900 mt-0.5">
-              Ocean Bliss Resort • Weekly Executive Operations Report
+              Resorva Resort • Weekly Executive Operations Report
             </h1>
           </div>
         </div>
@@ -266,12 +266,12 @@ export default function OwnerWeeklySummaryPage() {
         <header className="border-b border-slate-200 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-700 to-indigo-800 text-white flex items-center justify-center font-black text-sm shadow-md">
-                360
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-md border-2 border-sky-400/50 p-1 flex items-center justify-center shrink-0">
+                <img src="/resorva-logo.png" alt="Resorva Logo" className="w-full h-full object-contain rounded-full" />
               </div>
               <div>
                 <h2 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">
-                  OCEAN BLISS RESORT &amp; SPA
+                  RESORVA RESORT &amp; HOTEL
                 </h2>
                 <span className="text-xs text-slate-500 font-medium block">
                   Beachfront Executive Suite • 84 Keys Total • Alibaug Coast
@@ -579,7 +579,7 @@ export default function OwnerWeeklySummaryPage() {
         {/* Memo Footer */}
         <footer className="pt-4 border-t border-slate-200 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-2">
           <span>Prepared for Executive Leadership &amp; Resort Ownership Board</span>
-          <span>Meridian Bay Resort Operations System • Verified Real-Time Feed</span>
+          <span>Resorva Resort Operations System • Verified Real-Time Feed</span>
         </footer>
       </article>
     </div>

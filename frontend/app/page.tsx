@@ -18,11 +18,11 @@ export default function CommandCentrePage() {
           <div className="flex items-center gap-2 mb-1">
             <span className="w-3 h-3 bg-[#00ff66] inline-block shadow-[1px_1px_0px_#000]" />
             <h1 className="font-pixel text-sm sm:text-base text-white tracking-wider uppercase">
-              RESORT OPERATIONS COMMAND CENTRE
+              RESORTIERAI COMMAND CENTRE
             </h1>
           </div>
           <p className="font-mono-data text-xs text-slate-400">
-            Autonomous multi-agent orchestration • Meridian Bay Resort, Alibaug • 84 Keys
+            Smart Resort Handling Multi-Agent System • Meridian Bay Resort, Alibaug • 84 Keys
           </p>
         </div>
 

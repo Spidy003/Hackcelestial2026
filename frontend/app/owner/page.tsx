@@ -1762,7 +1762,7 @@ export default function OwnerDashboardPage() {
                 LIVE DIGITAL TWIN
               </span>
               <h2 className={`font-bold text-xs sm:text-sm ${isCyberpunk ? 'font-cyber-display !text-white' : 'text-slate-900'}`}>
-                Ocean Bliss Aerial Map • Real-Time Spatial Points
+                Resorva Aerial Map • Real-Time Spatial Points
               </h2>
 
               {/* Real-time Personnel Badge */}

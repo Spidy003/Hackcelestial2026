@@ -4,8 +4,8 @@ import SocketProvider from '@/components/SocketProvider'
 import { SidebarLayout } from '@/components/ui/8bit/sidebar'
 
 export const metadata: Metadata = {
-  title: 'Smart Resort 360 — AI Operations Platform',
-  description: '8 autonomous AI agents managing 84 rooms at Meridian Bay Resort, Alibaug with 8-bit retro operations dashboard.',
+  title: 'Resorva — AI Operations Platform',
+  description: '8 autonomous AI agents managing 84 rooms at Meridian Bay Resort, Alibaug with operations dashboard.',
 }
 
 export default function RootLayout({

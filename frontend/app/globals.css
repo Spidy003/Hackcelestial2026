@@ -252,6 +252,20 @@ body {
   box-shadow: 2px 2px 6px rgba(209, 217, 230, 0.4) !important;
 }
 
+.theme-white div[class*="bg-black/30"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #1e293b !important;
+  box-shadow: 2px 2px 6px rgba(209, 217, 230, 0.3) !important;
+}
+
+.theme-white span[class*="bg-white/10"],
+.theme-white div[class*="bg-white/5"] {
+  background-color: rgba(37, 99, 235, 0.08) !important;
+  color: #2563eb !important;
+  border-color: rgba(37, 99, 235, 0.25) !important;
+}
+
 /* Text overrides in Light Theme */
 .theme-white h1,
 .theme-white h2,

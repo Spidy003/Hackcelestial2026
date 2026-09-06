@@ -67,10 +67,10 @@ export default function Navbar() {
             </div>
             <div>
               <span className="font-extrabold tracking-wider text-slate-100 uppercase text-sm font-mono">
-                Smart Resort <span className="text-emerald-400">360</span>
+                ResortierAi
               </span>
               <span className="hidden sm:inline-block ml-2 px-1.5 py-0.5 text-[10px] uppercase font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 rounded">
-                Alibaug Coastal • 84 Rooms
+                Smart Resort Handling Multi-Agent System • 84 Rooms
               </span>
             </div>
           </Link>

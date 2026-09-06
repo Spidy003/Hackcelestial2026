@@ -109,7 +109,7 @@ export default function AgentRail() {
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 bg-[#16232d] border-2 border-black flex items-center justify-center text-[#00f0ff] shadow-[1px_1px_0px_#000]">
+                      <div className="w-7 h-7 rounded-md bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center text-[#00f0ff] shadow-xs">
                         <Icon className="w-3.5 h-3.5" />
                       </div>
                       <span className="text-[11px] font-mono-data text-slate-400 truncate max-w-[130px]">
@@ -120,8 +120,8 @@ export default function AgentRail() {
                     <Badge variant="green">AUTO</Badge>
                   </div>
 
-                  {/* Last Action Box */}
-                  <div className="my-2 p-2 bg-black border border-slate-850">
+                  {/* Last Action Box - Transparent with Blurry Glassmorphism Filter */}
+                  <div className="my-2 p-2 rounded-lg bg-black/30 backdrop-blur-md border border-white/10 shadow-inner">
                     <div className="flex items-center justify-between text-[10px] font-mono-data mb-1">
                       <span className="text-slate-400">LAST ACTION:</span>
                       <span className="text-[#00ff66] font-bold">{confidencePct}% CONF</span>
@@ -132,8 +132,9 @@ export default function AgentRail() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] font-mono-data">
-                  <span className="px-1.5 py-0.5 bg-[#15222b] text-[#00f0ff] border border-black text-[10px]">
+                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono-data">
+                  {/* Model Tag: Transparent Box with Blurry Filter */}
+                  <span className="px-2 py-0.5 rounded-md bg-white/10 backdrop-blur-md border border-white/20 text-[#00f0ff] text-[10px] font-semibold shadow-xs tracking-tight">
                     {cfg.model}
                   </span>
                   <span className="text-slate-400">

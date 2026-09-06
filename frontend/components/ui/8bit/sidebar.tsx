@@ -98,7 +98,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 bg-[#00ff66] inline-block shadow-[1px_1px_0px_#000]" />
             <span className="font-pixel text-[11px] text-white tracking-wider">
-              RESORT <span className="text-[#00ff66]">360</span>
+              RESORTIERAI
             </span>
           </div>
         </div>
@@ -106,9 +106,10 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-2">
           <Link
             href="/owner"
-            className="text-[10px] px-2.5 py-1 rounded-full uppercase font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs transition-colors"
+            className="text-[10px] px-2.5 py-1 rounded-full uppercase font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs transition-colors flex items-center gap-1.5"
           >
-            Owner view →
+            <img src="/resorva-logo.png" alt="Resorva" className="w-3.5 h-3.5 rounded-full object-contain shrink-0 bg-white" />
+            <span>Owner view →</span>
           </Link>
           <button
             onClick={() => setTheme(theme === 'white' ? 'dark' : 'white')}
@@ -153,14 +154,14 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
                 className="flex items-center gap-2 group"
               >
                 <div className="w-8 h-8 bg-[#00ff66] border-2 border-black flex items-center justify-center text-black font-pixel text-xs shadow-[2px_2px_0px_#000] group-hover:bg-[#2eff81]">
-                  360
+                  RA
                 </div>
                 <div>
                   <h1 className="font-pixel text-xs text-white tracking-wider">
-                    SMART RESORT
+                    RESORTIERAI
                   </h1>
-                  <span className="text-[9px] text-[#00f0ff] font-mono-data tracking-wide block">
-                    Alibaug • 84 Rooms
+                  <span className="text-[8px] text-[#00f0ff] font-mono-data tracking-tight block leading-tight">
+                    Smart Resort Handling Multi-Agent System
                   </span>
                 </div>
               </Link>
@@ -193,22 +194,23 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
               </span>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
-              <div className={`py-1.5 px-2 text-center rounded-xl font-bold text-xs select-none transition-all ${
+              <div className={`py-1.5 px-2 text-center rounded-xl font-bold text-[10px] select-none transition-all ${
                 theme === 'white'
                   ? 'bg-blue-600 text-white shadow-md'
-                  : 'border-2 border-black font-pixel text-[8px] bg-black text-[#00ff66] shadow-[2px_2px_0px_#000]'
+                  : 'border-2 border-black font-pixel text-[7.5px] bg-black text-[#00ff66] shadow-[2px_2px_0px_#000]'
               }`}>
-                Operations
+                Operations (ResortierAi)
               </div>
               <Link
                 href="/owner"
-                className={`py-1.5 px-2 text-center rounded-xl font-bold text-xs transition-all ${
+                className={`py-1.5 px-2 text-center rounded-xl font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 ${
                   theme === 'white'
                     ? 'bg-white text-slate-700 hover:text-blue-600 shadow-sm border border-slate-200'
-                    : 'border-2 border-black font-pixel text-[8px] bg-white text-black hover:bg-slate-100 shadow-[2px_2px_0px_#000]'
+                    : 'border-2 border-black font-pixel text-[7.5px] bg-white text-black hover:bg-slate-100 shadow-[2px_2px_0px_#000]'
                 }`}
               >
-                Owner view →
+                <img src="/resorva-logo.png" alt="Resorva" className="w-3.5 h-3.5 rounded-full object-contain shrink-0" />
+                <span>Owner (Resorva) →</span>
               </Link>
             </div>
           </div>
@@ -357,8 +359,8 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
               AI
             </div>
             <div>
-              <div className="font-pixel text-[8px] text-white">SMART RESORT</div>
-              <div className="text-[8px] text-slate-400 font-mono-data">8-BIT OPERATIONAL OS</div>
+              <div className="font-pixel text-[8px] text-white">RESORTIERAI</div>
+              <div className="text-[7.5px] text-slate-400 font-mono-data leading-tight">SMART RESORT HANDLING MULTI-AGENT SYSTEM</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-[10px] font-mono-data text-slate-400 mb-1">

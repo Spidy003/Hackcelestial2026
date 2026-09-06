@@ -48,17 +48,11 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
             {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <div className="flex items-center gap-2">
-            <div
-              className={`w-7 h-7 flex items-center justify-center font-bold text-xs ${
-                isCyberpunk
-                  ? 'bg-[#c6ff00] text-black font-cyber-display rounded-lg shadow-[0_0_12px_rgba(198,255,0,0.5)] font-black'
-                  : 'rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md'
-              }`}
-            >
-              360
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-white shadow-sm border border-sky-300/50 p-0.5 flex items-center justify-center shrink-0">
+              <img src="/resorva-logo.png" alt="Resorva Logo" className="w-full h-full object-contain rounded-full" />
             </div>
             <span className={`font-bold text-sm tracking-tight ${isCyberpunk ? 'font-cyber-display text-white' : ''}`}>
-              SMART RESORT
+              RESORVA
             </span>
           </div>
         </div>
@@ -120,21 +114,15 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
           {/* Brand Header */}
           <div className={`flex items-center justify-between pb-3 ${isCyberpunk ? 'border-b border-[#c6ff00]/20' : 'border-b border-slate-200/80'}`}>
             <div className="flex items-center gap-2.5">
-              <div
-                className={`w-9 h-9 flex items-center justify-center font-bold text-sm ${
-                  isCyberpunk
-                    ? 'bg-[#c6ff00] text-black font-cyber-display rounded-xl shadow-[0_0_20px_rgba(198,255,0,0.5)] font-black tracking-wider'
-                    : 'rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-[3px_3px_8px_rgba(37,99,235,0.4)]'
-                }`}
-              >
-                360
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-white shadow-md border-2 border-sky-400/50 p-0.5 flex items-center justify-center shrink-0">
+                <img src="/resorva-logo.png" alt="Resorva Logo" className="w-full h-full object-contain rounded-full" />
               </div>
               <div>
                 <h1 className={`font-bold text-sm tracking-tight leading-none ${isCyberpunk ? 'font-cyber-display text-white uppercase' : ''}`}>
-                  Smart Resort
+                  Resorva
                 </h1>
                 <span className={`text-[10px] font-medium tracking-wide ${isCyberpunk ? 'text-[#c6ff00] font-cyber' : 'text-blue-600'}`}>
-                  Owner Dashboard • 84 Keys
+                  Resort &amp; Hotel • 84 Keys
                 </span>
               </div>
             </div>
@@ -215,7 +203,7 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
                   : 'bg-white shadow-sm text-blue-700'
               }`}
             >
-              Owner view
+              Owner (Resorva)
             </span>
             <Link
               href="/"
@@ -225,7 +213,7 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
                   : 'text-slate-600 hover:text-blue-700 hover:bg-white/60'
               }`}
             >
-              Operations →
+              Operations (ResortierAi) →
             </Link>
           </div>
 
@@ -310,7 +298,7 @@ function OwnerLayoutContent({ children }: { children: React.ReactNode }) {
                 Resort Manager
               </span>
               <span className={`text-[9px] block truncate leading-tight ${isCyberpunk ? 'text-[#8b9bb4]' : 'text-slate-500'}`}>
-                Meridian Bay Resort
+                Resorva Resort &amp; Hotel
               </span>
             </div>
           </div>
